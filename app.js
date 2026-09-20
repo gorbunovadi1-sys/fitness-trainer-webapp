@@ -260,8 +260,8 @@ function closeMiniApp() {
   alert("Открой это в Telegram, чтобы вернуться в чат с ботом.");
 }
 
-function openTrainerChat() {
-  const trainerUrl = "https://t.me/mikhailpobedinsky";
+function openTrainerChat(prefillText) {
+  const trainerUrl = "https://t.me/mikhailpobedinsky" + (prefillText ? `?text=${encodeURIComponent(prefillText)}` : "");
   try {
     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.openTelegramLink) {
       Telegram.WebApp.openTelegramLink(trainerUrl);
@@ -270,7 +270,7 @@ function openTrainerChat() {
   } catch (e) {}
   window.open(trainerUrl, "_blank");
 }
-document.getElementById("contact-trainer-btn").addEventListener("click", openTrainerChat);
+document.getElementById("contact-trainer-btn").addEventListener("click", () => openTrainerChat());
 document.getElementById("settings-close-btn").addEventListener("click", closeMiniApp);
 
 document.getElementById("settings-workout-reminders").addEventListener("change", e => {
@@ -288,6 +288,7 @@ document.getElementById("settings-measurement-reminders").addEventListener("chan
 let ANKETA = {};
 let TARIFFS = [];
 let REQUESTED_TARIFF = null;
+let TARIFF_CONTACTED = false;
 let SUBSCRIPTION_UNTIL = null;
 
 async function loadRealData() {
@@ -311,6 +312,7 @@ async function loadRealData() {
     MEASUREMENT_REMINDERS_ENABLED = data.measurement_reminders_enabled !== false;
     TARIFFS = data.tariffs || [];
     REQUESTED_TARIFF = data.requested_tariff || null;
+    TARIFF_CONTACTED = !!data.tariff_contacted;
     SUBSCRIPTION_UNTIL = data.subscription_until || null;
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
@@ -1204,7 +1206,14 @@ function anketaFullyFilled() {
 }
 
 function renderAnketaNudge() {
-  document.getElementById("anketa-nudge-card").hidden = anketaFullyFilled();
+  const card = document.getElementById("anketa-nudge-card");
+  const filled = anketaFullyFilled();
+  card.classList.toggle("completed", filled);
+  document.getElementById("anketa-nudge-label").textContent = filled ? "✅ АНКЕТА" : "📝 АНКЕТА";
+  document.getElementById("anketa-nudge-title").textContent = filled ? "Анкета заполнена" : "Заполни анкету";
+  document.getElementById("anketa-nudge-sub").textContent = filled
+    ? "Тренер видит все твои ответы"
+    : "Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут";
 }
 
 function hasActiveSubscription() {
@@ -1259,7 +1268,7 @@ function renderTariffScreen() {
   wrap.innerHTML = statusHtml + cardsHtml;
 
   const contactBtn = document.getElementById("tariff-contact-btn");
-  if (contactBtn) contactBtn.addEventListener("click", openTrainerChat);
+  if (contactBtn) contactBtn.addEventListener("click", () => openTrainerChat(tariffContactMessage()));
 
   wrap.querySelectorAll("[data-pick-tariff]").forEach(btn => {
     btn.addEventListener("click", async () => {
@@ -1268,11 +1277,31 @@ function renderTariffScreen() {
       btn.textContent = "Отправляю…";
       await postJSON("/api/tariff-request", { name: t.name, price: t.price || "" });
       REQUESTED_TARIFF = { name: t.name, price: t.price || "" };
+      TARIFF_CONTACTED = false;
       renderTariffScreen();
       renderTariffNudge();
+      showTariffContactModal();
     });
   });
 }
+
+function tariffContactMessage() {
+  const name = REQUESTED_TARIFF ? REQUESTED_TARIFF.name : "";
+  return `Привет! Выбрал(а) тариф «${name}» — хочу обсудить оплату.`;
+}
+
+function showTariffContactModal() {
+  if (TARIFF_CONTACTED) return;
+  document.getElementById("tariff-contact-modal").hidden = false;
+}
+
+document.getElementById("tariff-modal-contact-btn").addEventListener("click", () => {
+  document.getElementById("tariff-contact-modal").hidden = true;
+  openTrainerChat(tariffContactMessage());
+});
+document.getElementById("tariff-modal-close-btn").addEventListener("click", () => {
+  document.getElementById("tariff-contact-modal").hidden = true;
+});
 
 document.querySelectorAll("[data-scale]").forEach(scale => {
   for (let i = 1; i <= 10; i++) {

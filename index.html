@@ -28,12 +28,20 @@
 
     <div class="quote-card" id="daily-quote">Загрузка…</div>
 
-    <div class="goal-card" id="anketa-nudge-card" data-nav="anketa" hidden>
+    <div class="goal-card" id="anketa-nudge-card" data-nav="anketa">
       <div class="goal-card-head">
-        <span class="goal-card-label">📝 АНКЕТА</span>
-        <span>Заполни анкету</span>
+        <span class="goal-card-label" id="anketa-nudge-label">📝 АНКЕТА</span>
+        <span id="anketa-nudge-title">Заполни анкету</span>
       </div>
-      <div class="goal-card-numbers">Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут</div>
+      <div class="goal-card-numbers" id="anketa-nudge-sub">Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут</div>
+    </div>
+
+    <div class="goal-card" id="tariff-nudge-card" data-nav="tariff" hidden>
+      <div class="goal-card-head">
+        <span class="goal-card-label">💳 ТАРИФ</span>
+        <span id="tariff-nudge-title">Выбери тариф</span>
+      </div>
+      <div class="goal-card-numbers" id="tariff-nudge-sub">Тренер подготовил варианты — выбери свой</div>
     </div>
 
     <div class="goal-card" id="goal-card" data-nav="anketa" data-open-section="goals" hidden>
@@ -43,14 +51,6 @@
       </div>
       <div class="goal-progress-bar"><div class="goal-progress-fill" id="goal-progress-fill"></div></div>
       <div class="goal-card-numbers" id="goal-card-numbers"></div>
-    </div>
-
-    <div class="goal-card" id="tariff-nudge-card" data-nav="tariff" hidden>
-      <div class="goal-card-head">
-        <span class="goal-card-label">💳 ТАРИФ</span>
-        <span id="tariff-nudge-title">Выбери тариф</span>
-      </div>
-      <div class="goal-card-numbers" id="tariff-nudge-sub">Тренер подготовил варианты — выбери свой</div>
     </div>
 
     <div class="stat-row">
@@ -542,6 +542,16 @@
     <span>Профиль</span>
   </button>
 </nav>
+
+<div class="modal-overlay" id="tariff-contact-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-icon">✅</div>
+    <h3>Заявка отправлена!</h3>
+    <p>Тренер получил твой выбор тарифа. Напиши ему сам(а) — так быстрее обсудите оплату и детали, текст уже готов.</p>
+    <button class="btn-primary" id="tariff-modal-contact-btn">💬 Написать тренеру</button>
+    <button class="btn-outline" id="tariff-modal-close-btn">Позже</button>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
