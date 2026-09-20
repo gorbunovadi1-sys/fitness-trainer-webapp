@@ -1227,7 +1227,13 @@ document.getElementById("save-meal-btn").addEventListener("click", async () => {
     const val = document.getElementById(`meal-${f}`).value;
     payload[f] = val ? Number(val) : null;
   });
-  if (Object.values(payload).every(v => v === null)) return;
+  if (Object.values(payload).every(v => v === null)) {
+    const status = document.getElementById("nutrition-upload-status");
+    status.hidden = false;
+    status.textContent = "Заполни хотя бы одно поле";
+    setTimeout(() => (status.hidden = true), 2000);
+    return;
+  }
 
   await postJSON("/api/nutrition-log", payload);
   NUTRITION_LOGS.push({ ts: new Date().toISOString(), ...payload });
@@ -1257,9 +1263,34 @@ document.getElementById("meal-photo-input").addEventListener("change", async e =
     const data = await res.json();
     PHOTOS.push(data.photo);
     renderNutritionToday();
-    status.textContent = "Сохранено ✓";
   } catch (err) {
     status.textContent = "Ошибка загрузки — попробуй другое фото";
+    e.target.value = "";
+    setTimeout(() => (status.hidden = true), 2500);
+    return;
+  }
+
+  status.textContent = "Распознаю КБЖУ…";
+  const scanData = new FormData();
+  scanData.append("initData", getInitData());
+  scanData.append("file", file);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/nutrition-scan`, { method: "POST", body: scanData });
+    if (!res.ok) throw new Error(await res.text());
+    const scan = await res.json();
+    const recognized = ["kcal", "protein", "fat", "carbs"].some(f => scan[f] != null);
+    if (recognized) {
+      ["kcal", "protein", "fat", "carbs"].forEach(f => {
+        document.getElementById(`meal-${f}`).value = scan[f] ?? "";
+      });
+      document.getElementById("meal-form").hidden = false;
+      status.textContent = "Распознано — проверь и сохрани";
+    } else {
+      status.textContent = "Не удалось распознать КБЖУ — впиши вручную";
+    }
+  } catch (err) {
+    status.textContent = "Фото сохранено, но распознать КБЖУ не получилось — впиши вручную";
   }
 
   e.target.value = "";
