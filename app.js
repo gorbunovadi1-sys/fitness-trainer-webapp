@@ -235,7 +235,9 @@ function normalizeProgram(rawProgram) {
 }
 
 let MEASUREMENTS = [];
-let NOTIFICATIONS_ENABLED = true;
+let WORKOUT_REMINDERS_ENABLED = true;
+let NUTRITION_REMINDERS_ENABLED = true;
+let MEASUREMENT_REMINDERS_ENABLED = true;
 
 function closeMiniApp() {
   try {
@@ -259,9 +261,17 @@ document.getElementById("contact-trainer-btn").addEventListener("click", () => {
 });
 document.getElementById("settings-close-btn").addEventListener("click", closeMiniApp);
 
-document.getElementById("settings-notifications").addEventListener("change", e => {
-  NOTIFICATIONS_ENABLED = e.target.checked;
-  postJSON("/api/settings", { notifications_enabled: NOTIFICATIONS_ENABLED });
+document.getElementById("settings-workout-reminders").addEventListener("change", e => {
+  WORKOUT_REMINDERS_ENABLED = e.target.checked;
+  postJSON("/api/settings", { workout_reminders_enabled: WORKOUT_REMINDERS_ENABLED });
+});
+document.getElementById("settings-nutrition-reminders").addEventListener("change", e => {
+  NUTRITION_REMINDERS_ENABLED = e.target.checked;
+  postJSON("/api/settings", { nutrition_reminders_enabled: NUTRITION_REMINDERS_ENABLED });
+});
+document.getElementById("settings-measurement-reminders").addEventListener("change", e => {
+  MEASUREMENT_REMINDERS_ENABLED = e.target.checked;
+  postJSON("/api/settings", { measurement_reminders_enabled: MEASUREMENT_REMINDERS_ENABLED });
 });
 let ANKETA = {};
 
@@ -280,7 +290,10 @@ async function loadRealData() {
     MEASUREMENTS = data.measurements || [];
     ANKETA = data.anketa || {};
     PHOTOS = data.photos || [];
-    NOTIFICATIONS_ENABLED = data.notifications_enabled !== false;
+    NUTRITION_LOGS = data.nutrition_logs || [];
+    WORKOUT_REMINDERS_ENABLED = data.workout_reminders_enabled !== false;
+    NUTRITION_REMINDERS_ENABLED = data.nutrition_reminders_enabled !== false;
+    MEASUREMENT_REMINDERS_ENABLED = data.measurement_reminders_enabled !== false;
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
@@ -603,7 +616,31 @@ function renderExercises(exercises) {
   const list = document.getElementById("exercise-list");
 
   if (!exercises.length) {
-    list.innerHTML = `<div class="hint-text" style="margin: 24px 0;">Сегодня день отдыха 😴</div>`;
+    list.innerHTML = `
+      <div class="rest-day-card">
+        <div class="rest-day-title">ВЫХОДНОЙ 😴</div>
+        <div class="rest-day-sub">Может сделаешь кардио? 20 минут — это недолго, но сильно приблизит к твоей цели 🔥</div>
+        <button class="btn-outline" id="add-cardio-btn">+ Добавить кардио</button>
+        <div id="cardio-form" hidden>
+          <div class="anketa-field"><label>Какое кардио?</label><input type="text" id="cardio-name" placeholder="Бег, велосипед, скакалка…" /></div>
+          <div class="anketa-field" style="margin-top: 10px;"><label>Сколько времени?</label><input type="text" id="cardio-duration" placeholder="20 мин" /></div>
+          <button class="btn-primary" id="save-cardio-btn" style="margin-top: 12px;">Сохранить</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("add-cardio-btn").addEventListener("click", () => {
+      document.getElementById("cardio-form").hidden = false;
+    });
+    document.getElementById("save-cardio-btn").addEventListener("click", () => {
+      const name = document.getElementById("cardio-name").value.trim();
+      const duration = document.getElementById("cardio-duration").value.trim();
+      if (!name) return;
+      postJSON("/api/workout-log", {
+        exercises: [{ name, comment: duration, done: true }],
+      });
+      list.innerHTML = `<div class="hint-text" style="margin: 24px 0;">Кардио «${name}» записано 🔥</div>`;
+    });
     return;
   }
 
@@ -946,18 +983,63 @@ document.querySelectorAll(".segmented").forEach(seg => {
   });
 });
 
-// ---------- Weekly nutrition analysis ----------
-// Дневные записи за неделю: заполняются вручную (текст+скрин) или, в фазе 2, синхронизацией с FatSecret.
-// null = клиент не внёс данные в этот день — такой день не участвует в среднем.
-const WEEK_NUTRITION = [
-  { day: "Пн", kcal: 1750, p: 125, f: 55, c: 170 },
-  { day: "Вт", kcal: 2100, p: 110, f: 80, c: 220 },
-  { day: "Ср", kcal: 1450, p: 120, f: 45, c: 160 },
-  { day: "Чт", kcal: null },
-  { day: "Пт", kcal: 1900, p: 130, f: 60, c: 190 },
-  { day: "Сб", kcal: 2200, p: 100, f: 90, c: 240 },
-  { day: "Вс", kcal: 1600, p: 140, f: 50, c: 150 },
-];
+// ---------- Питание: реальные записи (ручной ввод КБЖУ или скрин) ----------
+let NUTRITION_LOGS = [];
+
+function dateKey(ts) {
+  return ts.slice(0, 10);
+}
+
+function nutritionLogsForDate(dateStr) {
+  return NUTRITION_LOGS.filter(n => dateKey(n.ts) === dateStr);
+}
+
+function sumNutrition(logs) {
+  return logs.reduce((acc, n) => {
+    acc.kcal += n.kcal || 0;
+    acc.protein += n.protein || 0;
+    acc.fat += n.fat || 0;
+    acc.carbs += n.carbs || 0;
+    return acc;
+  }, { kcal: 0, protein: 0, fat: 0, carbs: 0 });
+}
+
+function todayDateStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function renderNutritionToday() {
+  const todayStr = todayDateStr();
+  const logsToday = nutritionLogsForDate(todayStr);
+  const sums = sumNutrition(logsToday);
+
+  document.getElementById("nutrition-today-kcal").textContent = Math.round(sums.kcal);
+  document.getElementById("nutrition-today-protein").textContent = `${Math.round(sums.protein)} г`;
+  document.getElementById("nutrition-today-fat").textContent = `${Math.round(sums.fat)} г`;
+  document.getElementById("nutrition-today-carbs").textContent = `${Math.round(sums.carbs)} г`;
+
+  const photosToday = PHOTOS.filter(p => p.angle === "meal" && dateKey(p.ts) === todayStr);
+  const entries = [
+    ...logsToday.map(n => ({ type: "manual", ts: n.ts, data: n })),
+    ...photosToday.map(p => ({ type: "photo", ts: p.ts, data: p })),
+  ].sort((a, b) => a.ts.localeCompare(b.ts));
+
+  const listWrap = document.getElementById("nutrition-today-list");
+  if (!entries.length) {
+    listWrap.className = "hint-text";
+    listWrap.textContent = "Пока пусто.";
+    return;
+  }
+  listWrap.className = "";
+  listWrap.innerHTML = entries.map(e => {
+    const time = new Date(e.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    if (e.type === "photo") {
+      return `<div class="nutrition-entry-row"><span>${time} · скрин</span><img src="${photoUrl(e.data)}" /></div>`;
+    }
+    const n = e.data;
+    return `<div class="nutrition-entry-row"><span>${time}</span><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}</span></div>`;
+  }).join("");
+}
 
 function average(values) {
   const present = values.filter(v => v !== null && v !== undefined);
@@ -972,33 +1054,55 @@ function fmtDelta(avg, target, unit) {
   return `<span class="${cls}">${sign}${delta} ${unit}</span>`;
 }
 
-function renderWeekNutrition() {
-  const daysWithData = WEEK_NUTRITION.filter(d => d.kcal !== null);
-  const maxKcal = Math.max(NUTRITION_TARGET.kcal * 1.3, ...daysWithData.map(d => d.kcal));
+function last7Days() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
 
-  document.getElementById("week-day-list").innerHTML = WEEK_NUTRITION.map(d => {
-    if (d.kcal === null) {
+function renderWeekNutrition() {
+  const dayStats = last7Days().map(dateStr => {
+    const logs = nutritionLogsForDate(dateStr);
+    return logs.length ? { dateStr, sums: sumNutrition(logs) } : { dateStr, sums: null };
+  });
+  const daysWithData = dayStats.filter(d => d.sums);
+  const maxKcal = Math.max(NUTRITION_TARGET.kcal * 1.3, ...daysWithData.map(d => d.sums.kcal), 1);
+
+  document.getElementById("week-day-list").innerHTML = dayStats.map(d => {
+    const label = new Date(d.dateStr).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
+    if (!d.sums) {
       return `
         <div class="week-day-row">
-          <div class="week-day-name">${d.day}</div>
+          <div class="week-day-name">${label}</div>
           <div class="week-day-bar-wrap"></div>
           <div class="week-day-kcal missing">нет данных</div>
         </div>`;
     }
-    const pct = Math.min(100, (d.kcal / maxKcal) * 100);
-    const over = d.kcal > NUTRITION_TARGET.kcal * 1.1;
+    const pct = Math.min(100, (d.sums.kcal / maxKcal) * 100);
+    const over = d.sums.kcal > NUTRITION_TARGET.kcal * 1.1;
     return `
       <div class="week-day-row">
-        <div class="week-day-name">${d.day}</div>
+        <div class="week-day-name">${label}</div>
         <div class="week-day-bar-wrap"><div class="week-day-bar ${over ? "over" : "ok"}" style="width:${pct}%"></div></div>
-        <div class="week-day-kcal">${d.kcal} ккал</div>
+        <div class="week-day-kcal">${Math.round(d.sums.kcal)} ккал</div>
       </div>`;
   }).join("");
 
-  const avgKcal = average(WEEK_NUTRITION.map(d => d.kcal));
-  const avgP = average(WEEK_NUTRITION.map(d => d.p));
-  const avgF = average(WEEK_NUTRITION.map(d => d.f));
-  const avgC = average(WEEK_NUTRITION.map(d => d.c));
+  if (!daysWithData.length) {
+    document.getElementById("week-summary").innerHTML = "";
+    document.getElementById("week-verdict").textContent =
+      "Пока нет ни одной записи за неделю — начни вносить питание, чтобы видеть анализ.";
+    return;
+  }
+
+  const avgKcal = average(daysWithData.map(d => d.sums.kcal));
+  const avgP = average(daysWithData.map(d => d.sums.protein));
+  const avgF = average(daysWithData.map(d => d.sums.fat));
+  const avgC = average(daysWithData.map(d => d.sums.carbs));
   const daysCounted = daysWithData.length;
 
   document.getElementById("week-summary").innerHTML = `
@@ -1014,11 +1118,47 @@ function renderWeekNutrition() {
   if (Math.abs(kcalDelta) <= NUTRITION_TARGET.kcal * 0.05) {
     verdict = `✅ В среднем за неделю норма калорий соблюдена (${Math.round(avgKcal)} из ${NUTRITION_TARGET.kcal} ккал). Если прогресс стоит — причина, скорее всего, не в питании.`;
   } else if (kcalDelta > 0) {
-    verdict = `⚠️ В среднем за неделю перебор на ${kcalDelta} ккал/день, в основном за счёт Вт и Сб. Это может объяснять застой в прогрессе, даже если в будни всё по плану.`;
+    const overDays = daysWithData
+      .filter(d => d.sums.kcal > NUTRITION_TARGET.kcal * 1.1)
+      .map(d => new Date(d.dateStr).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }));
+    const overText = overDays.length ? ` в основном за счёт ${overDays.join(", ")}` : "";
+    verdict = `⚠️ В среднем за неделю перебор на ${kcalDelta} ккал/день${overText}. Это может объяснять застой в прогрессе, даже если в остальные дни всё по плану.`;
   } else {
     verdict = `⚠️ В среднем за неделю недобор на ${Math.abs(kcalDelta)} ккал/день. При дефиците это не проблема, но при цели набора/поддержания — стоит обратить внимание.`;
   }
   document.getElementById("week-verdict").textContent = verdict;
+}
+
+// ---------- Карточка цели на главном экране ----------
+function renderGoalCard() {
+  const card = document.getElementById("goal-card");
+  const goalsData = ANKETA.goals || {};
+  const mainGoal = goalsData.main_goal;
+  const targetWeight = NUTRITION_TARGET.target_weight;
+  const weights = MEASUREMENTS.filter(m => m.weight != null).map(m => m.weight);
+
+  if (!mainGoal && !targetWeight) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  document.getElementById("goal-card-title").textContent = mainGoal || "Цель не указана";
+
+  if (targetWeight && weights.length) {
+    const start = weights[0];
+    const current = weights[weights.length - 1];
+    const total = start - targetWeight;
+    const done = start - current;
+    const pct = total !== 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : 0;
+    document.getElementById("goal-progress-fill").style.width = `${pct}%`;
+    document.getElementById("goal-card-numbers").textContent =
+      `${current} → ${targetWeight} кг · ${pct}% пути (начало: ${start} кг)`;
+  } else {
+    document.getElementById("goal-progress-fill").style.width = "0%";
+    document.getElementById("goal-card-numbers").textContent = targetWeight
+      ? "Внеси первый замер, чтобы видеть прогресс"
+      : "Тренер ещё не поставил цель по весу";
+  }
 }
 
 document.querySelectorAll("[data-scale]").forEach(scale => {
@@ -1059,12 +1199,54 @@ document.getElementById("submit-checkin").addEventListener("click", () => {
 });
 
 document.getElementById("add-meal-btn").addEventListener("click", () => {
+  const form = document.getElementById("meal-form");
+  form.hidden = !form.hidden;
+});
+
+document.getElementById("save-meal-btn").addEventListener("click", async () => {
+  const fields = ["kcal", "protein", "fat", "carbs"];
+  const payload = {};
+  fields.forEach(f => {
+    const val = document.getElementById(`meal-${f}`).value;
+    payload[f] = val ? Number(val) : null;
+  });
+  if (Object.values(payload).every(v => v === null)) return;
+
+  await postJSON("/api/nutrition-log", payload);
+  NUTRITION_LOGS.push({ ts: new Date().toISOString(), ...payload });
+
+  fields.forEach(f => (document.getElementById(`meal-${f}`).value = ""));
+  document.getElementById("meal-form").hidden = true;
+  renderNutritionToday();
+  renderWeekNutrition();
+});
+
+document.getElementById("meal-photo-input").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const status = document.getElementById("nutrition-upload-status");
+  status.hidden = false;
+  status.textContent = "Загружаю…";
+
+  const formData = new FormData();
+  formData.append("initData", getInitData());
+  formData.append("angle", "meal");
+  formData.append("file", file);
+
   try {
-    if (window.Telegram && window.Telegram.WebApp) {
-      Telegram.WebApp.HapticFeedback.impactOccurred("light");
-    }
-  } catch (e) {}
-  alert("MVP: пришли скрин/итог КБЖУ прямо в чат с ботом — тренер увидит это в твоей карточке.");
+    const res = await fetch(`${API_BASE}/api/photo`, { method: "POST", body: formData });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    PHOTOS.push(data.photo);
+    renderNutritionToday();
+    status.textContent = "Сохранено ✓";
+  } catch (err) {
+    status.textContent = "Ошибка загрузки — попробуй другое фото";
+  }
+
+  e.target.value = "";
+  setTimeout(() => (status.hidden = true), 2500);
 });
 
 (async () => {
@@ -1082,7 +1264,11 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   renderAnketa();
   renderAnketaProgress();
   renderPhotos();
-  document.getElementById("settings-notifications").checked = NOTIFICATIONS_ENABLED;
+  renderNutritionToday();
+  renderGoalCard();
+  document.getElementById("settings-workout-reminders").checked = WORKOUT_REMINDERS_ENABLED;
+  document.getElementById("settings-nutrition-reminders").checked = NUTRITION_REMINDERS_ENABLED;
+  document.getElementById("settings-measurement-reminders").checked = MEASUREMENT_REMINDERS_ENABLED;
 
   const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa", "settings"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");

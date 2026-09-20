@@ -28,6 +28,15 @@
 
     <div class="quote-card" id="daily-quote">Загрузка…</div>
 
+    <div class="goal-card" id="goal-card" data-nav="anketa" data-open-section="goals" hidden>
+      <div class="goal-card-head">
+        <span class="goal-card-label">🎯 ТВОЯ ЦЕЛЬ</span>
+        <span id="goal-card-title">—</span>
+      </div>
+      <div class="goal-progress-bar"><div class="goal-progress-fill" id="goal-progress-fill"></div></div>
+      <div class="goal-card-numbers" id="goal-card-numbers"></div>
+    </div>
+
     <div class="stat-row">
       <div class="stat-card">
         <div class="stat-value">12</div>
@@ -175,26 +184,39 @@
     <div data-view-content="day" id="nutrition-day">
       <div class="calorie-ring-wrap">
         <div class="calorie-ring">
-          <div class="calorie-value">1450</div>
+          <div class="calorie-value" id="nutrition-today-kcal">0</div>
           <div class="calorie-goal">из <span id="nutrition-goal-kcal">1800</span> ккал</div>
         </div>
         <div class="macro-list">
-          <div class="macro-row"><span class="macro-dot macro-b"></span>Б <b>120 г</b></div>
-          <div class="macro-row"><span class="macro-dot macro-f"></span>Ж <b>45 г</b></div>
-          <div class="macro-row"><span class="macro-dot macro-c"></span>У <b>160 г</b></div>
+          <div class="macro-row"><span class="macro-dot macro-b"></span>Б <b id="nutrition-today-protein">0 г</b></div>
+          <div class="macro-row"><span class="macro-dot macro-f"></span>Ж <b id="nutrition-today-fat">0 г</b></div>
+          <div class="macro-row"><span class="macro-dot macro-c"></span>У <b id="nutrition-today-carbs">0 г</b></div>
         </div>
       </div>
 
-      <div class="section-label">Приёмы пищи</div>
-      <div class="meal-grid">
-        <div class="meal-card"><div class="meal-name">Завтрак</div><div class="meal-kcal">320 ккал</div></div>
-        <div class="meal-card"><div class="meal-name">Обед</div><div class="meal-kcal">450 ккал</div></div>
-        <div class="meal-card"><div class="meal-name">Ужин</div><div class="meal-kcal">380 ккал</div></div>
-        <div class="meal-card"><div class="meal-name">Перекус</div><div class="meal-kcal">300 ккал</div></div>
+      <div class="section-label">Записи за сегодня</div>
+      <div id="nutrition-today-list" class="hint-text">Пока пусто.</div>
+
+      <div class="nutrition-add-row">
+        <button class="btn-outline" id="add-meal-btn">+ Внести КБЖУ</button>
+        <label class="btn-outline file-label-inline">
+          📷 Скрин
+          <input type="file" accept="image/*" id="meal-photo-input" hidden />
+        </label>
       </div>
 
-      <button class="btn-outline" id="add-meal-btn">+ Добавить приём пищи</button>
-      <div class="hint-text">Пришли скрин из FatSecret или впиши итог за день — тренер увидит в твоей карточке.</div>
+      <div id="meal-form" hidden>
+        <div class="measurement-form" style="grid-template-columns: repeat(2, 1fr); margin-top: 12px;">
+          <label>Калории<input type="number" id="meal-kcal" /></label>
+          <label>Белки, г<input type="number" id="meal-protein" /></label>
+          <label>Жиры, г<input type="number" id="meal-fat" /></label>
+          <label>Углеводы, г<input type="number" id="meal-carbs" /></label>
+        </div>
+        <button class="btn-primary" id="save-meal-btn">Сохранить</button>
+      </div>
+
+      <div id="nutrition-upload-status" class="hint-text" hidden></div>
+      <div class="hint-text">Можно вписать КБЖУ вручную или просто прислать скрин из FatSecret — тренер увидит и то, и другое.</div>
     </div>
 
     <div data-view-content="week" id="nutrition-week" hidden>
@@ -368,10 +390,6 @@
 
     <div class="menu-list">
       <div class="menu-item" data-nav="anketa">📝 Моя анкета</div>
-      <div class="menu-item" data-nav="progress" data-open-tab="measurements">📏 Мои замеры</div>
-      <div class="menu-item" data-nav="progress" data-open-tab="photos">📷 Мои фото</div>
-      <div class="menu-item" data-nav="anketa" data-open-section="goals">🎯 Мои цели</div>
-      <div class="menu-item health" data-nav="anketa" data-open-section="health">⚠️ Здоровье и ограничения</div>
       <div class="menu-item" data-nav="settings">⚙️ Настройки</div>
       <div class="menu-item" id="contact-trainer-btn">💬 Написать тренеру</div>
     </div>
@@ -401,11 +419,33 @@
 
     <div class="settings-row">
       <div>
+        <div class="settings-row-title">Напоминания о тренировках</div>
+        <div class="settings-row-sub">Если сегодня по плану тренировка, а её ещё нет в логе</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="settings-workout-reminders" checked />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </label>
+    </div>
+
+    <div class="settings-row" style="margin-top: 10px;">
+      <div>
+        <div class="settings-row-title">Напоминания о питании</div>
+        <div class="settings-row-sub">Если за сегодня ещё не внесено КБЖУ или скрин</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="settings-nutrition-reminders" checked />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </label>
+    </div>
+
+    <div class="settings-row" style="margin-top: 10px;">
+      <div>
         <div class="settings-row-title">Напоминания о замерах</div>
         <div class="settings-row-sub">Раз в 2 недели + подсказка внести первый замер</div>
       </div>
       <label class="switch">
-        <input type="checkbox" id="settings-notifications" checked />
+        <input type="checkbox" id="settings-measurement-reminders" checked />
         <span class="switch-track"><span class="switch-thumb"></span></span>
       </label>
     </div>
