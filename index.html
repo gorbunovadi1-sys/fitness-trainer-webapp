@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Мой тренер</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -365,13 +368,13 @@
 
     <div class="menu-list">
       <div class="menu-item" data-nav="anketa">📝 Моя анкета</div>
-      <div class="menu-item" data-nav="progress">📏 Мои замеры</div>
-      <div class="menu-item">📷 Мои фото</div>
-      <div class="menu-item">🎯 Мои цели</div>
+      <div class="menu-item" data-nav="progress" data-open-tab="measurements">📏 Мои замеры</div>
+      <div class="menu-item" data-nav="progress" data-open-tab="photos">📷 Мои фото</div>
+      <div class="menu-item" data-nav="anketa" data-open-section="goals">🎯 Мои цели</div>
       <div class="menu-item health" data-nav="anketa" data-open-section="health">⚠️ Здоровье и ограничения</div>
-      <div class="menu-item" data-nav="checkin">📋 Чек-ины</div>
-      <div class="menu-item">⚙️ Настройки</div>
-      <div class="menu-item">💬 Написать тренеру</div>
+      <div class="menu-item" data-nav="home">📋 Чек-ины</div>
+      <div class="menu-item" data-nav="settings">⚙️ Настройки</div>
+      <div class="menu-item" id="contact-trainer-btn">💬 Написать тренеру</div>
     </div>
   </section>
 
@@ -389,23 +392,52 @@
     <div id="anketa-sections"></div>
   </section>
 
+  <!-- ===== НАСТРОЙКИ ===== -->
+  <section class="screen" id="screen-settings" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="profile">←</button>
+      <div class="topbar-title">Настройки</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-title">Напоминания о замерах</div>
+        <div class="settings-row-sub">Раз в 2 недели + подсказка внести первый замер</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="settings-notifications" checked />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </label>
+    </div>
+
+    <div class="hint-text" style="margin: 24px 0;">Версия мини-аппа: 1.0</div>
+
+    <button class="btn-outline" id="settings-close-btn">Закрыть приложение</button>
+  </section>
+
 </div>
 
 <nav class="tabbar">
   <button class="tab" data-nav="home" data-tab>
-    <span class="tab-icon">🏠</span><span>Главная</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1v-9" /></svg>
+    <span>Главная</span>
   </button>
   <button class="tab" data-nav="workouts" data-tab>
-    <span class="tab-icon">🏋</span><span>Тренировки</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 8v8M17.5 8v8" /><path d="M3.5 10.5v3M20.5 10.5v3" /><path d="M6.5 12h11" /></svg>
+    <span>Тренировки</span>
   </button>
   <button class="tab" data-nav="nutrition" data-tab>
-    <span class="tab-icon">🍽</span><span>Питание</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11" /><path d="M16 3c-1.4 1.6-2 3.4-2 5.5 0 1.8 1 3 2 3.5v9" /></svg>
+    <span>Питание</span>
   </button>
   <button class="tab" data-nav="progress" data-tab>
-    <span class="tab-icon">📊</span><span>Прогресс</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7" /></svg>
+    <span>Прогресс</span>
   </button>
   <button class="tab" data-nav="profile" data-tab>
-    <span class="tab-icon">👤</span><span>Профиль</span>
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5" /><path d="M4.5 20c1.2-3.5 4.2-5.5 7.5-5.5s6.3 2 7.5 5.5" /></svg>
+    <span>Профиль</span>
   </button>
 </nav>
 

@@ -235,6 +235,25 @@ function normalizeProgram(rawProgram) {
 }
 
 let MEASUREMENTS = [];
+let NOTIFICATIONS_ENABLED = true;
+
+function closeMiniApp() {
+  try {
+    if (window.Telegram && window.Telegram.WebApp) {
+      Telegram.WebApp.close();
+      return;
+    }
+  } catch (e) {}
+  alert("Открой это в Telegram, чтобы вернуться в чат с ботом.");
+}
+
+document.getElementById("contact-trainer-btn").addEventListener("click", closeMiniApp);
+document.getElementById("settings-close-btn").addEventListener("click", closeMiniApp);
+
+document.getElementById("settings-notifications").addEventListener("change", e => {
+  NOTIFICATIONS_ENABLED = e.target.checked;
+  postJSON("/api/settings", { notifications_enabled: NOTIFICATIONS_ENABLED });
+});
 let ANKETA = {};
 
 async function loadRealData() {
@@ -252,6 +271,7 @@ async function loadRealData() {
     MEASUREMENTS = data.measurements || [];
     ANKETA = data.anketa || {};
     PHOTOS = data.photos || [];
+    NOTIFICATIONS_ENABLED = data.notifications_enabled !== false;
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
@@ -891,8 +911,15 @@ document.querySelectorAll("[data-nav]").forEach(el => {
   el.addEventListener("click", () => {
     showScreen(el.dataset.nav);
     if (el.dataset.openSection) openAnketaSection(el.dataset.openSection);
+    if (el.dataset.openTab) openProgressTab(el.dataset.openTab);
   });
 });
+
+function openProgressTab(view) {
+  const seg = document.getElementById("progress-segmented");
+  const target = seg.querySelector(`[data-view="${view}"]`);
+  if (target) target.click();
+}
 
 document.querySelectorAll(".segmented").forEach(seg => {
   seg.querySelectorAll("span").forEach(opt => {
@@ -1046,8 +1073,9 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   renderAnketa();
   renderAnketaProgress();
   renderPhotos();
+  document.getElementById("settings-notifications").checked = NOTIFICATIONS_ENABLED;
 
-  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa"];
+  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa", "settings"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");
   showScreen(KNOWN_SCREENS.includes(requestedScreen) ? requestedScreen : "home");
 })();
