@@ -1,5 +1,5 @@
 // Telegram WebApp init (no-op safely outside Telegram)
-let CLIENT_NAME = "Друг";
+let CLIENT_NAME = "Спортсмен";
 try {
   if (window.Telegram && window.Telegram.WebApp) {
     Telegram.WebApp.ready();
