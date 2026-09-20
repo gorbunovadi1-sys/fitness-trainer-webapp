@@ -247,7 +247,16 @@ function closeMiniApp() {
   alert("Открой это в Telegram, чтобы вернуться в чат с ботом.");
 }
 
-document.getElementById("contact-trainer-btn").addEventListener("click", closeMiniApp);
+document.getElementById("contact-trainer-btn").addEventListener("click", () => {
+  const trainerUrl = "https://t.me/mikhailpobedinsky";
+  try {
+    if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.openTelegramLink) {
+      Telegram.WebApp.openTelegramLink(trainerUrl);
+      return;
+    }
+  } catch (e) {}
+  window.open(trainerUrl, "_blank");
+});
 document.getElementById("settings-close-btn").addEventListener("click", closeMiniApp);
 
 document.getElementById("settings-notifications").addEventListener("change", e => {
