@@ -11,6 +11,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 html, body {
   margin: 0;
@@ -689,6 +690,73 @@ html, body {
 }
 .measurement-row b { color: var(--text); }
 .measurement-row:last-child { border-bottom: none; }
+
+/* ---------- Анкета ---------- */
+.anketa-progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.anketa-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.anketa-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.anketa-section.is-health { border-color: rgba(255,93,93,0.4); }
+.anketa-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  cursor: pointer;
+}
+.anketa-section-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.anketa-section-num.done { background: var(--accent); border-color: var(--accent); color: #0d0d0d; }
+.anketa-section-title { flex: 1; font-weight: 700; font-size: 14px; }
+.anketa-section-warn { color: var(--danger); font-size: 16px; }
+.anketa-section-chevron { color: var(--text-dim); transition: transform 0.2s ease; }
+.anketa-section.open .anketa-section-chevron { transform: rotate(180deg); }
+
+.anketa-section-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.anketa-field { display: flex; flex-direction: column; gap: 6px; }
+.anketa-field label { font-size: 12px; color: var(--text-dim); }
+.anketa-field input[type="text"], .anketa-field textarea {
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.anketa-field textarea { resize: vertical; min-height: 50px; }
+.anketa-save-btn { margin-top: 4px; }
 
 /* ---------- Profile ---------- */
 .profile-head {

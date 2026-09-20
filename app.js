@@ -235,6 +235,7 @@ function normalizeProgram(rawProgram) {
 }
 
 let MEASUREMENTS = [];
+let ANKETA = {};
 
 async function loadRealData() {
   try {
@@ -249,9 +250,150 @@ async function loadRealData() {
     NUTRITION_TARGET = data.nutrition_target;
     if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
     MEASUREMENTS = data.measurements || [];
+    ANKETA = data.anketa || {};
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
+}
+
+// ---------- Анкета (8 разделов) ----------
+const ANKETA_SECTIONS = [
+  { key: "general", title: "Общая информация", fields: [
+    { key: "name", label: "Имя", type: "text" },
+    { key: "age", label: "Возраст", type: "text" },
+    { key: "height_weight", label: "Рост / вес", type: "text" },
+    { key: "city_timezone", label: "Город / часовой пояс", type: "text" },
+    { key: "occupation", label: "Род деятельности (сидячая / активная)", type: "text" },
+    { key: "experience", label: "Опыт тренировок (какой, как давно)", type: "textarea" },
+  ]},
+  { key: "goals", title: "Цели и мотивация", fields: [
+    { key: "main_goal", label: "Основная цель", type: "text" },
+    { key: "desired_result", label: "Желаемый результат (в цифрах или визуально)", type: "text" },
+    { key: "deadline", label: "Срок достижения результата", type: "text" },
+    { key: "why_now", label: "Почему эта цель важна именно сейчас", type: "textarea" },
+  ]},
+  { key: "health", title: "Здоровье и ограничения", warn: true, fields: [
+    { key: "chronic", label: "Хронические заболевания", type: "textarea" },
+    { key: "injuries", label: "Травмы (прошлые или текущие)", type: "textarea" },
+    { key: "joints", label: "Проблемы с суставами / спиной / коленями / давлением", type: "textarea" },
+    { key: "medications", label: "Приём лекарств на постоянной основе", type: "text" },
+    { key: "contraindications", label: "Противопоказания от врача", type: "textarea" },
+  ]},
+  { key: "activity", title: "Активность и образ жизни", fields: [
+    { key: "steps", label: "Среднее количество шагов в день", type: "text" },
+    { key: "frequency", label: "Сколько раз в неделю готов(а) тренироваться", type: "text" },
+    { key: "time", label: "Предпочтительное время тренировок", type: "text" },
+    { key: "place", label: "Где тренируешься (дом / зал / улица)", type: "text" },
+    { key: "equipment", label: "Оборудование (если дом)", type: "text" },
+  ]},
+  { key: "nutrition_anketa", title: "Питание", fields: [
+    { key: "kbju_experience", label: "Опыт подсчёта калорий / БЖУ", type: "text" },
+    { key: "meals_count", label: "Количество приёмов пищи в день", type: "text" },
+    { key: "restrictions", label: "Пищевые ограничения / аллергии", type: "text" },
+    { key: "breakdowns", label: "Частые срывы и сложности", type: "textarea" },
+    { key: "diary_readiness", label: "Готовность вести дневник питания", type: "text" },
+  ]},
+  { key: "sleep", title: "Сон и восстановление", fields: [
+    { key: "sleep_hours", label: "Среднее количество сна (часы)", type: "text" },
+    { key: "sleep_quality", label: "Качество сна (1–10)", type: "text" },
+    { key: "stress_level", label: "Уровень стресса (1–10)", type: "text" },
+  ]},
+  { key: "discipline", title: "Дисциплина и ожидания", fields: [
+    { key: "readiness", label: "Готовность соблюдать рекомендации (1–10)", type: "text" },
+    { key: "obstacles", label: "Что может помешать процессу", type: "textarea" },
+    { key: "expectations", label: "Ожидания от тренера", type: "textarea" },
+    { key: "control_format", label: "Предпочтительный формат контроля", type: "text" },
+  ]},
+  { key: "extra", title: "Дополнительно", fields: [
+    { key: "extra_info", label: "Дополнительная информация, которую важно знать", type: "textarea" },
+  ]},
+];
+
+function anketaSectionFilled(section) {
+  const data = ANKETA[section.key] || {};
+  return section.fields.some(f => (data[f.key] || "").trim() !== "");
+}
+
+function escapeAttr(str) {
+  return String(str).replace(/"/g, "&quot;");
+}
+
+function renderAnketa() {
+  const wrap = document.getElementById("anketa-sections");
+
+  wrap.innerHTML = ANKETA_SECTIONS.map((section, i) => {
+    const filled = anketaSectionFilled(section);
+    const data = ANKETA[section.key] || {};
+    return `
+      <div class="anketa-section${section.warn ? " is-health" : ""}" data-section="${section.key}">
+        <div class="anketa-section-head" data-toggle-section>
+          <div class="anketa-section-num ${filled ? "done" : ""}">${filled ? "✓" : i + 1}</div>
+          <div class="anketa-section-title">${section.title}</div>
+          ${section.warn ? '<span class="anketa-section-warn">⚠️</span>' : ""}
+          <span class="anketa-section-chevron">⌄</span>
+        </div>
+        <div class="anketa-section-body" hidden>
+          ${section.fields.map(f => `
+            <div class="anketa-field">
+              <label>${f.label}</label>
+              ${f.type === "textarea"
+                ? `<textarea data-field="${f.key}">${data[f.key] || ""}</textarea>`
+                : `<input type="text" data-field="${f.key}" value="${escapeAttr(data[f.key] || "")}" />`}
+            </div>
+          `).join("")}
+          <button class="btn-primary anketa-save-btn" data-save-section="${section.key}">Сохранить раздел</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  wrap.querySelectorAll("[data-toggle-section]").forEach(head => {
+    head.addEventListener("click", () => {
+      const sectionEl = head.closest(".anketa-section");
+      const body = sectionEl.querySelector(".anketa-section-body");
+      const isOpen = sectionEl.classList.contains("open");
+      sectionEl.classList.toggle("open", !isOpen);
+      body.hidden = isOpen;
+    });
+  });
+
+  wrap.querySelectorAll("[data-save-section]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const sectionKey = btn.dataset.saveSection;
+      const sectionEl = btn.closest(".anketa-section");
+      const sectionDef = ANKETA_SECTIONS.find(s => s.key === sectionKey);
+      const values = {};
+      sectionEl.querySelectorAll("[data-field]").forEach(input => {
+        values[input.dataset.field] = input.value;
+      });
+      ANKETA[sectionKey] = values;
+      postJSON("/api/anketa", { anketa: { [sectionKey]: values } });
+
+      const numEl = sectionEl.querySelector(".anketa-section-num");
+      const filled = sectionDef.fields.some(f => (values[f.key] || "").trim() !== "");
+      numEl.classList.toggle("done", filled);
+      numEl.textContent = filled ? "✓" : String(ANKETA_SECTIONS.indexOf(sectionDef) + 1);
+
+      renderAnketaProgress();
+      btn.textContent = "Сохранено ✓";
+      setTimeout(() => (btn.textContent = "Сохранить раздел"), 2000);
+    });
+  });
+}
+
+function renderAnketaProgress() {
+  const filledCount = ANKETA_SECTIONS.filter(s => anketaSectionFilled(s)).length;
+  const pct = Math.round((filledCount / ANKETA_SECTIONS.length) * 100);
+  document.getElementById("anketa-progress-fill").style.width = `${pct}%`;
+  document.getElementById("anketa-progress-label").textContent = `${filledCount} из ${ANKETA_SECTIONS.length} разделов заполнено`;
+}
+
+function openAnketaSection(key) {
+  const sectionEl = document.querySelector(`.anketa-section[data-section="${key}"]`);
+  if (!sectionEl) return;
+  sectionEl.classList.add("open");
+  sectionEl.querySelector(".anketa-section-body").hidden = false;
+  sectionEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 const RU_DAY_BY_JS_INDEX = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -653,7 +795,10 @@ function showScreen(name) {
 }
 
 document.querySelectorAll("[data-nav]").forEach(el => {
-  el.addEventListener("click", () => showScreen(el.dataset.nav));
+  el.addEventListener("click", () => {
+    showScreen(el.dataset.nav);
+    if (el.dataset.openSection) openAnketaSection(el.dataset.openSection);
+  });
 });
 
 document.querySelectorAll(".segmented").forEach(seg => {
@@ -805,8 +950,10 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   renderWeekNutrition();
   renderWeightTab();
   renderMeasurementsHistory();
+  renderAnketa();
+  renderAnketaProgress();
 
-  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile"];
+  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");
   showScreen(KNOWN_SCREENS.includes(requestedScreen) ? requestedScreen : "home");
 })();

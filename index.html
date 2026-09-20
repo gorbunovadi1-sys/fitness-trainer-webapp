@@ -340,15 +340,29 @@
     </div>
 
     <div class="menu-list">
-      <div class="menu-item">📝 Моя анкета</div>
+      <div class="menu-item" data-nav="anketa">📝 Моя анкета</div>
       <div class="menu-item" data-nav="progress">📏 Мои замеры</div>
       <div class="menu-item">📷 Мои фото</div>
       <div class="menu-item">🎯 Мои цели</div>
-      <div class="menu-item health">⚠️ Здоровье и ограничения</div>
+      <div class="menu-item health" data-nav="anketa" data-open-section="health">⚠️ Здоровье и ограничения</div>
       <div class="menu-item" data-nav="checkin">📋 Чек-ины</div>
       <div class="menu-item">⚙️ Настройки</div>
       <div class="menu-item">💬 Написать тренеру</div>
     </div>
+  </section>
+
+  <!-- ===== АНКЕТА ===== -->
+  <section class="screen" id="screen-anketa" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="profile">←</button>
+      <div class="topbar-title">Твоя анкета</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="anketa-progress-bar"><div class="anketa-progress-fill" id="anketa-progress-fill"></div></div>
+    <div class="hint-text" id="anketa-progress-label" style="margin-bottom: 20px;">0 из 8 разделов заполнено</div>
+
+    <div id="anketa-sections"></div>
   </section>
 
 </div>
