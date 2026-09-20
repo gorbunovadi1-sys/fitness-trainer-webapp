@@ -447,6 +447,7 @@ function renderAnketaProgress() {
   const pct = Math.round((filledCount / ANKETA_SECTIONS.length) * 100);
   document.getElementById("anketa-progress-fill").style.width = `${pct}%`;
   document.getElementById("anketa-progress-label").textContent = `${filledCount} из ${ANKETA_SECTIONS.length} разделов заполнено`;
+  renderAnketaNudge();
   renderTariffNudge();
 }
 
@@ -1200,6 +1201,10 @@ function renderGoalCard() {
 // ---------- Тариф ----------
 function anketaFullyFilled() {
   return ANKETA_SECTIONS.every(s => anketaSectionFilled(s));
+}
+
+function renderAnketaNudge() {
+  document.getElementById("anketa-nudge-card").hidden = anketaFullyFilled();
 }
 
 function hasActiveSubscription() {
