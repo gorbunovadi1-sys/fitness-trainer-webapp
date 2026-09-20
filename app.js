@@ -1266,6 +1266,55 @@ document.getElementById("meal-photo-input").addEventListener("change", async e =
   setTimeout(() => (status.hidden = true), 2500);
 });
 
+// ---------- ИИ-консультант ----------
+let AI_CHAT_HISTORY = [];
+
+function renderAiChatLog() {
+  const log = document.getElementById("ai-chat-log");
+  if (!AI_CHAT_HISTORY.length) {
+    log.innerHTML = `<div class="hint-text" style="margin: 24px 0;">Спроси про тренировки, питание, восстановление — отвечу коротко и по делу.</div>`;
+    return;
+  }
+  log.innerHTML = AI_CHAT_HISTORY.map(m =>
+    `<div class="ai-chat-msg ${m.role === "user" ? "ai-chat-msg-user" : "ai-chat-msg-ai"}">${m.content}</div>`
+  ).join("");
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendAiChatMessage() {
+  const input = document.getElementById("ai-chat-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  const status = document.getElementById("ai-chat-status");
+  input.value = "";
+  AI_CHAT_HISTORY.push({ role: "user", content: message });
+  renderAiChatLog();
+  status.hidden = false;
+  status.textContent = "Печатает…";
+
+  try {
+    const res = await fetch(`${API_BASE}/api/ai-chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData: getInitData(), message, history: AI_CHAT_HISTORY.slice(0, -1) }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    AI_CHAT_HISTORY.push({ role: "assistant", content: data.reply });
+    renderAiChatLog();
+    status.hidden = true;
+  } catch (err) {
+    status.textContent = "Не получилось получить ответ — попробуй ещё раз чуть позже.";
+  }
+}
+
+document.getElementById("ai-chat-send-btn").addEventListener("click", sendAiChatMessage);
+document.getElementById("ai-chat-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendAiChatMessage();
+});
+renderAiChatLog();
+
 (async () => {
   await loadRealData();
 
@@ -1287,7 +1336,7 @@ document.getElementById("meal-photo-input").addEventListener("change", async e =
   document.getElementById("settings-nutrition-reminders").checked = NUTRITION_REMINDERS_ENABLED;
   document.getElementById("settings-measurement-reminders").checked = MEASUREMENT_REMINDERS_ENABLED;
 
-  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa", "settings"];
+  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa", "settings", "ai"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");
   showScreen(KNOWN_SCREENS.includes(requestedScreen) ? requestedScreen : "home");
 })();

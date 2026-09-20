@@ -71,6 +71,15 @@
       </div>
       <div class="list-card-arrow">→</div>
     </div>
+
+    <div class="list-card" data-nav="ai">
+      <div class="list-card-icon">🤖</div>
+      <div class="list-card-body">
+        <div class="list-card-title">ИИ-консультант</div>
+        <div class="list-card-sub">Быстрый ответ на вопрос о тренировках и питании</div>
+      </div>
+      <div class="list-card-arrow">→</div>
+    </div>
   </section>
 
   <!-- ===== WORKOUTS ===== -->
@@ -374,6 +383,26 @@
     </div>
 
     <button class="btn-primary" id="submit-checkin">Отправить</button>
+  </section>
+
+  <!-- ===== ИИ-КОНСУЛЬТАНТ ===== -->
+  <section class="screen" id="screen-ai" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="home">←</button>
+      <div class="topbar-title">ИИ-консультант</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="hint-text" style="margin-bottom: 16px;">Отвечает на общие вопросы о тренировках и питании. Для личных вопросов по твоей программе — «Написать тренеру» в профиле.</div>
+
+    <div id="ai-chat-log" class="ai-chat-log"></div>
+
+    <div id="ai-chat-status" class="hint-text" hidden></div>
+
+    <div class="ai-chat-input-row">
+      <input type="text" id="ai-chat-input" placeholder="Спроси что-нибудь…" />
+      <button class="btn-primary" id="ai-chat-send-btn">→</button>
+    </div>
   </section>
 
   <!-- ===== PROFILE ===== -->
