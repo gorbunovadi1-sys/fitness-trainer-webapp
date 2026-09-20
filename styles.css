@@ -293,6 +293,65 @@ html, body {
 }
 .weight-input::placeholder { color: var(--text-dim); }
 .weight-unit { font-size: 11px; color: var(--text-dim); }
+.prev-weight-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+/* ---------- Exercise picker pills (Прогресс → Силовые) ---------- */
+.exercise-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+}
+.exercise-pills span {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.exercise-pills span.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0d0d0d;
+  font-weight: 700;
+}
+
+/* ---------- Week program (Тренировки → Вся неделя) ---------- */
+.week-program-list { display: flex; flex-direction: column; gap: 10px; }
+.week-program-day {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+.week-program-day-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.week-program-day-name {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--text-dim);
+  width: 28px;
+}
+.week-program-day-name.is-today { color: var(--accent); }
+.week-program-day-title { font-weight: 700; font-size: 14px; }
+.week-program-exercises { display: flex; flex-direction: column; gap: 6px; }
+.week-program-ex-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-dim);
+  padding-left: 38px;
+}
+.week-program-ex-row span:first-child { color: var(--text); }
 .exercise-check {
   width: 26px; height: 26px;
   border-radius: 50%;

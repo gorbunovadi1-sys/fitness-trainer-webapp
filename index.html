@@ -69,19 +69,28 @@
         <button class="back-btn back-btn-overlay" data-nav="home">←</button>
       </div>
       <div class="hero-text">
-        <div class="hero-greeting">ВЕРХ ТЕЛА</div>
-        <div class="hero-sub">⏱ 40 мин &nbsp;·&nbsp; 🔥 8 упражнений</div>
+        <div class="hero-greeting" id="workout-day-title">ВЕРХ ТЕЛА</div>
+        <div class="hero-sub" id="workout-day-meta">⏱ 40 мин &nbsp;·&nbsp; 🔥 8 упражнений</div>
       </div>
     </div>
 
-    <div class="day-pills">
-      <span>Пн</span><span>Вт</span><span class="active">Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+    <div class="segmented" id="workout-segmented">
+      <span class="active" data-view="day">Сегодня</span><span data-view="week">Вся неделя</span>
     </div>
 
-    <button class="btn-primary">Начать</button>
+    <div data-view-content="day" id="workout-day">
+      <div class="day-pills" id="workout-day-pills"></div>
 
-    <div class="section-label">Упражнения</div>
-    <div class="exercise-list" id="exercise-list"></div>
+      <button class="btn-primary">Начать</button>
+
+      <div class="section-label">Упражнения</div>
+      <div class="exercise-list" id="exercise-list"></div>
+    </div>
+
+    <div data-view-content="week" id="workout-week" hidden>
+      <div class="section-label">Программа на неделю</div>
+      <div id="week-program-list" class="week-program-list"></div>
+    </div>
   </section>
 
   <!-- ===== NUTRITION ===== -->
@@ -155,33 +164,66 @@
       </div>
     </div>
 
-    <div class="segmented">
-      <span class="active">Вес</span><span>Замеры</span><span>Фото</span>
+    <div class="segmented" id="progress-segmented">
+      <span class="active" data-view="weight">Вес</span><span data-view="strength">Силовые</span><span data-view="measurements">Замеры</span><span data-view="photos">Фото</span>
     </div>
 
-    <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none">
-      <polyline fill="none" stroke="var(--accent)" stroke-width="3"
-        points="0,30 45,40 90,55 135,50 180,70 225,80 270,95 320,100" />
-      <circle cx="320" cy="100" r="5" fill="var(--accent)" />
-    </svg>
+    <div data-view-content="weight" id="progress-weight">
+      <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none">
+        <polyline fill="none" stroke="var(--accent)" stroke-width="3"
+          points="0,30 45,40 90,55 135,50 180,70 225,80 270,95 320,100" />
+        <circle cx="320" cy="100" r="5" fill="var(--accent)" />
+      </svg>
 
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-value-sm">67,0 кг</div>
-        <div class="stat-label">начальный</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-value-sm">67,0 кг</div>
+          <div class="stat-label">начальный</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value-sm accent">60,2 кг</div>
+          <div class="stat-label">текущий</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value-sm">57,0 кг</div>
+          <div class="stat-label">цель</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value-sm accent">60,2 кг</div>
-        <div class="stat-label">текущий</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value-sm">57,0 кг</div>
-        <div class="stat-label">цель</div>
-      </div>
+
+      <div class="banner-card">− 6,8 кг за 3 месяца</div>
+      <button class="btn-outline" data-nav="measurements-form">+ Внести замеры (раз в 2 недели)</button>
     </div>
 
-    <div class="banner-card">− 6,8 кг за 3 месяца</div>
-    <button class="btn-outline" data-nav="measurements-form">+ Внести замеры (раз в 2 недели)</button>
+    <div data-view-content="strength" id="progress-strength" hidden>
+      <div class="exercise-pills" id="strength-exercise-pills"></div>
+
+      <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none" id="strength-chart"></svg>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-value-sm" id="strength-first">—</div>
+          <div class="stat-label">начало блока</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value-sm accent" id="strength-last">—</div>
+          <div class="stat-label">сейчас</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value-sm" id="strength-delta">—</div>
+          <div class="stat-label">прогресс</div>
+        </div>
+      </div>
+      <div class="hint-text">Вес фиксируется автоматически каждый раз, когда отмечаешь упражнение выполненным.</div>
+    </div>
+
+    <div data-view-content="measurements" id="progress-measurements" hidden>
+      <div class="hint-text" style="margin: 24px 0;">Замеры вносятся раз в 2 недели — история появится здесь после первой записи.</div>
+      <button class="btn-outline" data-nav="measurements-form">+ Внести замеры</button>
+    </div>
+
+    <div data-view-content="photos" id="progress-photos" hidden>
+      <div class="hint-text" style="margin: 24px 0;">Фото до/после по неделям появятся здесь.</div>
+    </div>
   </section>
 
   <!-- ===== CHECK-IN ===== -->

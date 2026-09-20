@@ -13,16 +13,121 @@ document.getElementById("home-greeting").textContent = `ПРИВЕТ, ${CLIENT_N
 document.getElementById("profile-name").textContent = CLIENT_NAME;
 document.getElementById("profile-avatar").textContent = CLIENT_NAME.charAt(0).toUpperCase();
 
-const EXERCISES = [
-  { icon: "💪", name: "Жим гантелей лёжа", sets: "3 × 12", weighted: true, weight: null },
-  { icon: "🏋", name: "Тяга гантели в наклоне", sets: "3 × 12", weighted: true, weight: null },
-  { icon: "🤸", name: "Разведение гантелей", sets: "3 × 15", weighted: true, weight: null },
-  { icon: "🧱", name: "Планка", sets: "3 × 40 сек", weighted: false },
-];
+// ---------- Backend API ----------
+const API_BASE = "https://fitness-trainer-bot-production-b12c.up.railway.app";
 
-function renderExercises() {
+function getInitData() {
+  try {
+    return (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+async function postJSON(path, body) {
+  try {
+    await fetch(API_BASE + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData: getInitData(), ...body }),
+    });
+  } catch (e) {
+    console.warn("API call failed:", path, e);
+  }
+}
+
+// ---------- Program (составляет тренер, на MVP — заглушка вместо реального редактора) ----------
+const DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+const PROGRAM = {
+  "Пн": {
+    title: "НИЗ ТЕЛА", duration: "45 мин",
+    exercises: [
+      { icon: "🏋", name: "Приседания с гантелями", sets: "4 × 10", weighted: true, weight: null, done: false },
+      { icon: "🦵", name: "Выпады", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: "🧱", name: "Ягодичный мостик", sets: "3 × 15", weighted: true, weight: null, done: false },
+    ],
+  },
+  "Вт": { title: "ОТДЫХ", duration: "", exercises: [] },
+  "Ср": {
+    title: "ВЕРХ ТЕЛА", duration: "40 мин",
+    exercises: [
+      { icon: "💪", name: "Жим гантелей лёжа", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: "🏋", name: "Тяга гантели в наклоне", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: "🤸", name: "Разведение гантелей", sets: "3 × 15", weighted: true, weight: null, done: false },
+      { icon: "🧱", name: "Планка", sets: "3 × 40 сек", weighted: false, done: false },
+    ],
+  },
+  "Чт": {
+    title: "КАРДИО", duration: "30 мин",
+    exercises: [
+      { icon: "🏃", name: "Бег / эллипс", sets: "30 мин", weighted: false, done: false },
+    ],
+  },
+  "Пт": {
+    title: "ВЕРХ ТЕЛА 2", duration: "45 мин",
+    exercises: [
+      { icon: "💪", name: "Жим штанги лёжа", sets: "4 × 8", weighted: true, weight: null, done: false },
+      { icon: "🏋", name: "Тяга верхнего блока", sets: "3 × 12", weighted: true, weight: null, done: false },
+    ],
+  },
+  "Сб": {
+    title: "НИЗ ТЕЛА 2", duration: "40 мин",
+    exercises: [
+      { icon: "🦵", name: "Румынская тяга", sets: "3 × 10", weighted: true, weight: null, done: false },
+    ],
+  },
+  "Вс": { title: "ОТДЫХ", duration: "", exercises: [] },
+};
+
+// История рабочих весов по упражнениям — на MVP заглушка, дальше наполняется из /api/workout-log
+const EXERCISE_HISTORY = {
+  "Жим гантелей лёжа": [
+    { date: "2026-08-24", weight: 17.5 },
+    { date: "2026-08-31", weight: 20 },
+    { date: "2026-09-07", weight: 20 },
+    { date: "2026-09-14", weight: 22.5 },
+  ],
+  "Тяга гантели в наклоне": [
+    { date: "2026-08-24", weight: 14 },
+    { date: "2026-09-07", weight: 16 },
+    { date: "2026-09-14", weight: 18 },
+  ],
+  "Приседания с гантелями": [
+    { date: "2026-08-24", weight: 12 },
+    { date: "2026-09-14", weight: 16 },
+  ],
+};
+
+function lastWeightFor(name) {
+  const hist = EXERCISE_HISTORY[name];
+  if (!hist || !hist.length) return null;
+  return hist[hist.length - 1].weight;
+}
+
+const RU_DAY_BY_JS_INDEX = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+let currentWorkoutDay = RU_DAY_BY_JS_INDEX[new Date().getDay()];
+if (!PROGRAM[currentWorkoutDay]) currentWorkoutDay = "Пн";
+
+function saveWorkoutLog() {
+  const exercises = PROGRAM[currentWorkoutDay].exercises.filter(e => e.weighted);
+  if (!exercises.length) return;
+  postJSON("/api/workout-log", {
+    exercises: exercises.map(e => ({ name: e.name, weight: e.weight, done: !!e.done })),
+  });
+}
+
+function renderExercises(exercises) {
   const list = document.getElementById("exercise-list");
-  list.innerHTML = EXERCISES.map((ex, i) => `
+
+  if (!exercises.length) {
+    list.innerHTML = `<div class="hint-text" style="margin: 24px 0;">Сегодня день отдыха 😴</div>`;
+    return;
+  }
+
+  list.innerHTML = exercises.map((ex, i) => {
+    const prev = lastWeightFor(ex.name);
+    return `
     <div class="exercise-item">
       <div class="exercise-thumb">${ex.icon}</div>
       <div class="exercise-info">
@@ -32,24 +137,121 @@ function renderExercises() {
           <div class="weight-field">
             <input type="number" inputmode="decimal" step="0.5" min="0"
                    class="weight-input" data-weight="${i}"
-                   placeholder="вес" value="${ex.weight ?? ""}" />
+                   placeholder="${prev !== null ? prev : "вес"}" value="${ex.weight ?? ""}" />
             <span class="weight-unit">кг</span>
-          </div>` : ""}
+          </div>
+          ${prev !== null ? `<div class="prev-weight-hint">Прошлый раз: ${prev} кг</div>` : ""}` : ""}
       </div>
-      <div class="exercise-check" data-check="${i}"></div>
+      <div class="exercise-check ${ex.done ? "done" : ""}" data-check="${i}"></div>
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   list.querySelectorAll("[data-check]").forEach(el => {
-    el.addEventListener("click", () => el.classList.toggle("done"));
+    el.addEventListener("click", () => {
+      el.classList.toggle("done");
+      exercises[Number(el.dataset.check)].done = el.classList.contains("done");
+      saveWorkoutLog();
+    });
   });
 
   list.querySelectorAll("[data-weight]").forEach(input => {
     input.addEventListener("input", () => {
-      EXERCISES[Number(input.dataset.weight)].weight = input.value ? Number(input.value) : null;
+      exercises[Number(input.dataset.weight)].weight = input.value ? Number(input.value) : null;
     });
+    input.addEventListener("change", saveWorkoutLog);
     input.addEventListener("click", e => e.stopPropagation());
   });
+}
+
+function renderWorkoutDayPills() {
+  const wrap = document.getElementById("workout-day-pills");
+  wrap.innerHTML = DAYS.map(d => `<span data-day="${d}" class="${d === currentWorkoutDay ? "active" : ""}">${d}</span>`).join("");
+  wrap.querySelectorAll("[data-day]").forEach(el => {
+    el.addEventListener("click", () => selectWorkoutDay(el.dataset.day));
+  });
+}
+
+function selectWorkoutDay(day) {
+  currentWorkoutDay = day;
+  const info = PROGRAM[day];
+  document.getElementById("workout-day-title").textContent = info.title;
+  document.getElementById("workout-day-meta").textContent = info.exercises.length
+    ? `⏱ ${info.duration} · 🔥 ${info.exercises.length} упражнений`
+    : "😴 День отдыха";
+  renderWorkoutDayPills();
+  renderExercises(info.exercises);
+}
+
+function renderWeekProgram() {
+  const wrap = document.getElementById("week-program-list");
+  wrap.innerHTML = DAYS.map(d => {
+    const info = PROGRAM[d];
+    const isRest = info.exercises.length === 0;
+    return `
+      <div class="week-program-day">
+        <div class="week-program-day-head">
+          <span class="week-program-day-name${d === currentWorkoutDay ? " is-today" : ""}">${d}</span>
+          <span class="week-program-day-title">${info.title}</span>
+        </div>
+        ${isRest ? "" : `<div class="week-program-exercises">${info.exercises.map(e => `
+          <div class="week-program-ex-row"><span>${e.name}</span><span>${e.sets}</span></div>
+        `).join("")}</div>`}
+      </div>`;
+  }).join("");
+}
+
+// ---------- Силовой прогресс ----------
+function buildSparklinePoints(values, width = 320, height = 120, pad = 14) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = values.length > 1 ? width / (values.length - 1) : 0;
+  return values.map((v, i) => {
+    const x = i * stepX;
+    const y = height - pad - ((v - min) / range) * (height - pad * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+}
+
+function renderStrengthChart(name) {
+  const hist = EXERCISE_HISTORY[name] || [];
+  const values = hist.map(h => h.weight);
+  const svg = document.getElementById("strength-chart");
+
+  if (!values.length) {
+    svg.innerHTML = "";
+    ["strength-first", "strength-last", "strength-delta"].forEach(id => {
+      document.getElementById(id).textContent = "—";
+    });
+    return;
+  }
+
+  const points = buildSparklinePoints(values);
+  const last = points[points.length - 1].split(",");
+  svg.innerHTML = `
+    <polyline fill="none" stroke="var(--accent)" stroke-width="3" points="${points.join(" ")}" />
+    <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="var(--accent)" />
+  `;
+
+  document.getElementById("strength-first").textContent = `${values[0]} кг`;
+  document.getElementById("strength-last").textContent = `${values[values.length - 1]} кг`;
+  const delta = Math.round((values[values.length - 1] - values[0]) * 10) / 10;
+  document.getElementById("strength-delta").textContent = `${delta >= 0 ? "+" : ""}${delta} кг`;
+}
+
+function renderStrengthPills() {
+  const wrap = document.getElementById("strength-exercise-pills");
+  const names = Object.keys(EXERCISE_HISTORY);
+  wrap.innerHTML = names.map((n, i) => `<span data-ex="${n}" class="${i === 0 ? "active" : ""}">${n}</span>`).join("");
+  wrap.querySelectorAll("[data-ex]").forEach(el => {
+    el.addEventListener("click", () => {
+      wrap.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      el.classList.add("active");
+      renderStrengthChart(el.dataset.ex);
+    });
+  });
+  if (names.length) renderStrengthChart(names[0]);
 }
 
 function showScreen(name) {
@@ -72,13 +274,11 @@ document.querySelectorAll(".segmented").forEach(seg => {
       seg.querySelectorAll("span").forEach(o => o.classList.remove("active"));
       opt.classList.add("active");
 
-      // if this segmented control drives named content blocks (currently: nutrition day/week)
       if (opt.dataset.view) {
         const screen = seg.closest("[data-screen]");
         screen.querySelectorAll("[data-view-content]").forEach(block => {
           block.hidden = block.dataset.viewContent !== opt.dataset.view;
         });
-        if (opt.dataset.view === "week") renderWeekNutrition();
       }
     });
   });
@@ -117,7 +317,6 @@ function renderWeekNutrition() {
   const daysWithData = WEEK_NUTRITION.filter(d => d.kcal !== null);
   const maxKcal = Math.max(NUTRITION_TARGET.kcal * 1.3, ...daysWithData.map(d => d.kcal));
 
-  // per-day bars
   document.getElementById("week-day-list").innerHTML = WEEK_NUTRITION.map(d => {
     if (d.kcal === null) {
       return `
@@ -137,7 +336,6 @@ function renderWeekNutrition() {
       </div>`;
   }).join("");
 
-  // averages
   const avgKcal = average(WEEK_NUTRITION.map(d => d.kcal));
   const avgP = average(WEEK_NUTRITION.map(d => d.p));
   const avgF = average(WEEK_NUTRITION.map(d => d.f));
@@ -152,7 +350,6 @@ function renderWeekNutrition() {
     <div class="week-summary-row"><span>Дней учтено</span><span>${daysCounted} из 7</span></div>
   `;
 
-  // verdict text — это и есть ответ на "почему застой", если он есть
   const kcalDelta = Math.round(avgKcal - NUTRITION_TARGET.kcal);
   let verdict;
   if (Math.abs(kcalDelta) <= NUTRITION_TARGET.kcal * 0.05) {
@@ -181,11 +378,24 @@ document.querySelectorAll("[data-scale]").forEach(scale => {
 });
 
 document.getElementById("submit-checkin").addEventListener("click", () => {
+  const values = { sleep: 0, stress: 0, mood: 0, compliance: 0 };
+  document.querySelectorAll(".checkin-field").forEach(field => {
+    const label = field.querySelector(".checkin-label").textContent;
+    const selected = field.querySelectorAll(".scale-10 span.selected").length;
+    if (label.includes("Сон")) values.sleep = selected;
+    else if (label.includes("Стресс")) values.stress = selected;
+    else if (label.includes("Самочувствие")) values.mood = selected;
+    else if (label.includes("плана")) values.compliance = selected;
+  });
+
+  postJSON("/api/checkin", values);
+
   try {
     if (window.Telegram && window.Telegram.WebApp) {
-      Telegram.WebApp.sendData(JSON.stringify({ type: "checkin_submit" }));
+      Telegram.WebApp.HapticFeedback?.notificationOccurred("success");
     }
   } catch (e) {}
+
   showScreen("home");
 });
 
@@ -198,7 +408,10 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   alert("MVP: пришли скрин/итог КБЖУ прямо в чат с ботом — тренер увидит это в твоей карточке.");
 });
 
-renderExercises();
+selectWorkoutDay(currentWorkoutDay);
+renderWeekProgram();
+renderStrengthPills();
+renderWeekNutrition();
 
 const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile"];
 const requestedScreen = new URLSearchParams(window.location.search).get("screen");
