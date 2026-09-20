@@ -7,10 +7,10 @@ try {
 } catch (e) {}
 
 const EXERCISES = [
-  { icon: "💪", name: "Жим гантелей лёжа", sets: "3 × 12" },
-  { icon: "🏋", name: "Тяга гантели в наклоне", sets: "3 × 12" },
-  { icon: "🤸", name: "Разведение гантелей", sets: "3 × 15" },
-  { icon: "🧱", name: "Планка", sets: "3 × 40 сек" },
+  { icon: "💪", name: "Жим гантелей лёжа", sets: "3 × 12", weighted: true, weight: null },
+  { icon: "🏋", name: "Тяга гантели в наклоне", sets: "3 × 12", weighted: true, weight: null },
+  { icon: "🤸", name: "Разведение гантелей", sets: "3 × 15", weighted: true, weight: null },
+  { icon: "🧱", name: "Планка", sets: "3 × 40 сек", weighted: false },
 ];
 
 function renderExercises() {
@@ -18,9 +18,16 @@ function renderExercises() {
   list.innerHTML = EXERCISES.map((ex, i) => `
     <div class="exercise-item">
       <div class="exercise-thumb">${ex.icon}</div>
-      <div>
+      <div class="exercise-info">
         <div class="exercise-name">${ex.name}</div>
         <div class="exercise-sets">${ex.sets}</div>
+        ${ex.weighted ? `
+          <div class="weight-field">
+            <input type="number" inputmode="decimal" step="0.5" min="0"
+                   class="weight-input" data-weight="${i}"
+                   placeholder="вес" value="${ex.weight ?? ""}" />
+            <span class="weight-unit">кг</span>
+          </div>` : ""}
       </div>
       <div class="exercise-check" data-check="${i}"></div>
     </div>
@@ -28,6 +35,13 @@ function renderExercises() {
 
   list.querySelectorAll("[data-check]").forEach(el => {
     el.addEventListener("click", () => el.classList.toggle("done"));
+  });
+
+  list.querySelectorAll("[data-weight]").forEach(input => {
+    input.addEventListener("input", () => {
+      EXERCISES[Number(input.dataset.weight)].weight = input.value ? Number(input.value) : null;
+    });
+    input.addEventListener("click", e => e.stopPropagation());
   });
 }
 

@@ -238,8 +238,38 @@ html, body {
   font-size: 20px;
   flex-shrink: 0;
 }
+.exercise-info { flex: 1; min-width: 0; }
 .exercise-name { font-weight: 700; font-size: 14px; }
 .exercise-sets { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+
+.weight-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.weight-input {
+  width: 56px;
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  -moz-appearance: textfield;
+}
+.weight-input::-webkit-outer-spin-button,
+.weight-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.weight-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.weight-input::placeholder { color: var(--text-dim); }
+.weight-unit { font-size: 11px; color: var(--text-dim); }
 .exercise-check {
   width: 26px; height: 26px;
   border-radius: 50%;
