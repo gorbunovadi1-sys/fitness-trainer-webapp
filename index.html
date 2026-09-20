@@ -37,6 +37,14 @@
       <div class="goal-card-numbers" id="goal-card-numbers"></div>
     </div>
 
+    <div class="goal-card" id="tariff-nudge-card" data-nav="tariff" hidden>
+      <div class="goal-card-head">
+        <span class="goal-card-label">💳 ТАРИФ</span>
+        <span id="tariff-nudge-title">Выбери тариф</span>
+      </div>
+      <div class="goal-card-numbers" id="tariff-nudge-sub">Тренер подготовил варианты — выбери свой</div>
+    </div>
+
     <div class="stat-row">
       <div class="stat-card">
         <div class="stat-value">12</div>
@@ -426,9 +434,20 @@
 
     <div class="menu-list">
       <div class="menu-item" data-nav="anketa">📝 Моя анкета</div>
+      <div class="menu-item" data-nav="tariff">💳 Тариф</div>
       <div class="menu-item" data-nav="settings">⚙️ Настройки</div>
       <div class="menu-item" id="contact-trainer-btn">💬 Написать тренеру</div>
     </div>
+  </section>
+
+  <!-- ===== ТАРИФ ===== -->
+  <section class="screen" id="screen-tariff" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="profile">←</button>
+      <div class="topbar-title">Тариф</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div id="tariff-content"></div>
   </section>
 
   <!-- ===== АНКЕТА ===== -->

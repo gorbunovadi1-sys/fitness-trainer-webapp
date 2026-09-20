@@ -310,6 +310,22 @@ html, body {
 .list-card-body { flex: 1; }
 .list-card-title { font-weight: 700; font-size: 15px; }
 .list-card-sub { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+.tariff-card { cursor: default; align-items: flex-start; }
+.btn-outline-sm {
+  width: auto;
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-outline-sm:disabled { opacity: 0.6; cursor: default; }
 .list-card-plus, .list-card-arrow {
   color: var(--accent);
   font-weight: 800;

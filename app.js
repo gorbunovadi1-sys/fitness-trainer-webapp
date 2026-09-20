@@ -260,7 +260,7 @@ function closeMiniApp() {
   alert("Открой это в Telegram, чтобы вернуться в чат с ботом.");
 }
 
-document.getElementById("contact-trainer-btn").addEventListener("click", () => {
+function openTrainerChat() {
   const trainerUrl = "https://t.me/mikhailpobedinsky";
   try {
     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.openTelegramLink) {
@@ -269,7 +269,8 @@ document.getElementById("contact-trainer-btn").addEventListener("click", () => {
     }
   } catch (e) {}
   window.open(trainerUrl, "_blank");
-});
+}
+document.getElementById("contact-trainer-btn").addEventListener("click", openTrainerChat);
 document.getElementById("settings-close-btn").addEventListener("click", closeMiniApp);
 
 document.getElementById("settings-workout-reminders").addEventListener("change", e => {
@@ -285,6 +286,9 @@ document.getElementById("settings-measurement-reminders").addEventListener("chan
   postJSON("/api/settings", { measurement_reminders_enabled: MEASUREMENT_REMINDERS_ENABLED });
 });
 let ANKETA = {};
+let TARIFFS = [];
+let REQUESTED_TARIFF = null;
+let SUBSCRIPTION_UNTIL = null;
 
 async function loadRealData() {
   try {
@@ -305,6 +309,9 @@ async function loadRealData() {
     WORKOUT_REMINDERS_ENABLED = data.workout_reminders_enabled !== false;
     NUTRITION_REMINDERS_ENABLED = data.nutrition_reminders_enabled !== false;
     MEASUREMENT_REMINDERS_ENABLED = data.measurement_reminders_enabled !== false;
+    TARIFFS = data.tariffs || [];
+    REQUESTED_TARIFF = data.requested_tariff || null;
+    SUBSCRIPTION_UNTIL = data.subscription_until || null;
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
@@ -440,6 +447,7 @@ function renderAnketaProgress() {
   const pct = Math.round((filledCount / ANKETA_SECTIONS.length) * 100);
   document.getElementById("anketa-progress-fill").style.width = `${pct}%`;
   document.getElementById("anketa-progress-label").textContent = `${filledCount} из ${ANKETA_SECTIONS.length} разделов заполнено`;
+  renderTariffNudge();
 }
 
 function openAnketaSection(key) {
@@ -1189,6 +1197,78 @@ function renderGoalCard() {
   }
 }
 
+// ---------- Тариф ----------
+function anketaFullyFilled() {
+  return ANKETA_SECTIONS.every(s => anketaSectionFilled(s));
+}
+
+function hasActiveSubscription() {
+  return !!(SUBSCRIPTION_UNTIL && new Date(SUBSCRIPTION_UNTIL) >= new Date(new Date().toDateString()));
+}
+
+function renderTariffNudge() {
+  const card = document.getElementById("tariff-nudge-card");
+  if (!TARIFFS.length || !anketaFullyFilled() || hasActiveSubscription()) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  if (REQUESTED_TARIFF) {
+    document.getElementById("tariff-nudge-title").textContent = `Заявка: ${REQUESTED_TARIFF.name}`;
+    document.getElementById("tariff-nudge-sub").textContent = "Тренер свяжется с тобой, чтобы принять оплату";
+  } else {
+    document.getElementById("tariff-nudge-title").textContent = "Выбери тариф";
+    document.getElementById("tariff-nudge-sub").textContent = "Тренер подготовил варианты — выбери свой";
+  }
+}
+
+function renderTariffScreen() {
+  const wrap = document.getElementById("tariff-content");
+
+  if (!TARIFFS.length) {
+    wrap.innerHTML = `<div class="hint-text">Тренер ещё не добавил тарифы — загляни сюда чуть позже.</div>`;
+    return;
+  }
+
+  const statusHtml = hasActiveSubscription()
+    ? `<div class="hint-text" style="margin-bottom:16px;">Подписка активна до ${new Date(SUBSCRIPTION_UNTIL).toLocaleDateString("ru-RU")}.</div>`
+    : REQUESTED_TARIFF
+    ? `<div class="hint-text" style="margin-bottom:16px;">Заявка на «${REQUESTED_TARIFF.name}» отправлена — тренер свяжется с тобой в переписке, чтобы принять оплату.</div>
+       <button class="btn-primary" id="tariff-contact-btn" style="margin-bottom:20px;">💬 Написать тренеру</button>`
+    : `<div class="hint-text" style="margin-bottom:16px;">Выбери тариф — тренер увидит заявку и напишет тебе, чтобы принять оплату.</div>`;
+
+  const cardsHtml = TARIFFS.map((t, i) => {
+    const picked = REQUESTED_TARIFF && REQUESTED_TARIFF.name === t.name;
+    return `
+    <div class="list-card tariff-card">
+      <div class="list-card-body">
+        <div class="list-card-title">${t.name}${t.price ? ` — ${t.price}` : ""}</div>
+        ${t.description ? `<div class="list-card-sub">${t.description}</div>` : ""}
+      </div>
+      <button class="btn-outline-sm" data-pick-tariff="${i}" ${picked ? "disabled" : ""}>
+        ${picked ? "Выбрано ✓" : "Выбрать"}
+      </button>
+    </div>`;
+  }).join("");
+
+  wrap.innerHTML = statusHtml + cardsHtml;
+
+  const contactBtn = document.getElementById("tariff-contact-btn");
+  if (contactBtn) contactBtn.addEventListener("click", openTrainerChat);
+
+  wrap.querySelectorAll("[data-pick-tariff]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const t = TARIFFS[Number(btn.dataset.pickTariff)];
+      btn.disabled = true;
+      btn.textContent = "Отправляю…";
+      await postJSON("/api/tariff-request", { name: t.name, price: t.price || "" });
+      REQUESTED_TARIFF = { name: t.name, price: t.price || "" };
+      renderTariffScreen();
+      renderTariffNudge();
+    });
+  });
+}
+
 document.querySelectorAll("[data-scale]").forEach(scale => {
   for (let i = 1; i <= 10; i++) {
     const cell = document.createElement("span");
@@ -1380,11 +1460,12 @@ renderAiChatLog();
   renderPhotos();
   renderNutritionToday();
   renderGoalCard();
+  renderTariffScreen();
   document.getElementById("settings-workout-reminders").checked = WORKOUT_REMINDERS_ENABLED;
   document.getElementById("settings-nutrition-reminders").checked = NUTRITION_REMINDERS_ENABLED;
   document.getElementById("settings-measurement-reminders").checked = MEASUREMENT_REMINDERS_ENABLED;
 
-  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa", "settings", "ai"];
+  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa", "settings", "ai", "tariff"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");
   showScreen(KNOWN_SCREENS.includes(requestedScreen) ? requestedScreen : "home");
 })();
