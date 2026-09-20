@@ -179,12 +179,18 @@
 
   <!-- ===== CHECK-IN ===== -->
   <section class="screen" id="screen-checkin" data-screen hidden>
-    <div class="topbar">
-      <button class="back-btn" data-nav="home">←</button>
-      <div class="topbar-title">Чек-ин</div>
-      <div class="topbar-spacer"></div>
+    <div class="hero hero-sub-screen">
+      <div class="hero-photo"></div>
+      <img class="hero-img" src="assets/checkin.jpg" alt="" onerror="this.remove()" />
+      <div class="hero-overlay"></div>
+      <div class="hero-topbar">
+        <button class="back-btn back-btn-overlay" data-nav="home">←</button>
+      </div>
+      <div class="hero-text">
+        <div class="hero-greeting">ЧЕК-ИН</div>
+        <div class="hero-sub">Как ты себя чувствуешь на этой неделе?</div>
+      </div>
     </div>
-    <div class="progress-sub">Как ты себя чувствуешь на этой неделе?</div>
 
     <div class="checkin-field">
       <div class="checkin-label">🌙 Сон</div>

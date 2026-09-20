@@ -92,6 +92,7 @@ html, body {
 
 #screen-workouts .hero-img { object-position: 50% 20%; }
 #screen-progress .hero-img { object-position: center; }
+#screen-checkin .hero-img { object-position: center 30%; }
 
 .hero-text {
   position: relative;
