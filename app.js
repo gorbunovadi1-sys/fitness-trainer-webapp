@@ -132,6 +132,8 @@ function normalizeProgram(rawProgram) {
   return program;
 }
 
+let MEASUREMENTS = [];
+
 async function loadRealData() {
   try {
     const res = await fetch(API_BASE + "/api/bootstrap", {
@@ -144,6 +146,7 @@ async function loadRealData() {
     PROGRAM = normalizeProgram(data.program);
     NUTRITION_TARGET = data.nutrition_target;
     if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
+    MEASUREMENTS = data.measurements || [];
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
@@ -284,6 +287,84 @@ function renderStrengthChart(name) {
   document.getElementById("strength-delta").textContent = `${delta >= 0 ? "+" : ""}${delta} кг`;
 }
 
+// ---------- Вес и замеры ----------
+function renderWeightTab() {
+  const weights = MEASUREMENTS.filter(m => m.weight != null).map(m => m.weight);
+  const svg = document.getElementById("weight-chart");
+
+  if (weights.length < 2) {
+    svg.innerHTML = "";
+  } else {
+    const points = buildSparklinePoints(weights);
+    const last = points[points.length - 1].split(",");
+    svg.innerHTML = `
+      <polyline fill="none" stroke="var(--accent)" stroke-width="3" points="${points.join(" ")}" />
+      <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="var(--accent)" />
+    `;
+  }
+
+  document.getElementById("weight-start").textContent = weights.length ? `${weights[0]} кг` : "—";
+  document.getElementById("weight-current").textContent = weights.length ? `${weights[weights.length - 1]} кг` : "—";
+
+  const banner = document.getElementById("weight-banner");
+  if (weights.length >= 2) {
+    const delta = Math.round((weights[weights.length - 1] - weights[0]) * 10) / 10;
+    banner.textContent = delta <= 0 ? `− ${Math.abs(delta)} кг с начала` : `+ ${delta} кг с начала`;
+  } else {
+    banner.textContent = "Внеси ещё один замер, чтобы видеть динамику";
+  }
+}
+
+function renderMeasurementsHistory() {
+  const wrap = document.getElementById("measurements-history");
+  if (!MEASUREMENTS.length) {
+    wrap.textContent = "Записей пока нет.";
+    return;
+  }
+  const fields = [
+    ["weight", "Вес", "кг"], ["waist", "Талия", "см"], ["hips", "Бёдра", "см"],
+    ["chest", "Грудь", "см"], ["arms", "Руки", "см"], ["thighs", "Бедро", "см"],
+  ];
+  wrap.innerHTML = MEASUREMENTS.slice().reverse().map(m => {
+    const date = new Date(m.ts).toLocaleDateString("ru-RU");
+    const values = fields
+      .filter(([key]) => m[key] != null)
+      .map(([key, label, unit]) => `${label}: <b>${m[key]} ${unit}</b>`)
+      .join(" · ");
+    return `<div class="measurement-row"><span>${date}</span><span>${values}</span></div>`;
+  }).join("");
+}
+
+document.querySelectorAll("[data-goto-tab]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const seg = document.getElementById("progress-segmented");
+    const target = seg.querySelector(`[data-view="${btn.dataset.gotoTab}"]`);
+    if (target) target.click();
+  });
+});
+
+document.getElementById("submit-measurement").addEventListener("click", async () => {
+  const fields = ["weight", "waist", "hips", "chest", "arms", "thighs"];
+  const payload = {};
+  fields.forEach(f => {
+    const val = document.getElementById(`m-${f}`).value;
+    payload[f] = val ? Number(val) : null;
+  });
+
+  if (Object.values(payload).every(v => v === null)) return;
+
+  await postJSON("/api/measurement", payload);
+  MEASUREMENTS.push({ ts: new Date().toISOString(), ...payload });
+
+  fields.forEach(f => (document.getElementById(`m-${f}`).value = ""));
+  renderWeightTab();
+  renderMeasurementsHistory();
+
+  const badge = document.getElementById("measurement-saved");
+  badge.hidden = false;
+  setTimeout(() => (badge.hidden = true), 2000);
+});
+
 function renderStrengthPills() {
   const wrap = document.getElementById("strength-exercise-pills");
   const names = Object.keys(EXERCISE_HISTORY);
@@ -329,9 +410,6 @@ document.querySelectorAll(".segmented").forEach(seg => {
 });
 
 // ---------- Weekly nutrition analysis ----------
-// Норма (из профиля/программы клиента). На MVP — заглушка, дальше берётся из Profile.target.
-const NUTRITION_TARGET = { kcal: 1800, p: 130, f: 60, c: 180 };
-
 // Дневные записи за неделю: заполняются вручную (текст+скрин) или, в фазе 2, синхронизацией с FatSecret.
 // null = клиент не внёс данные в этот день — такой день не участвует в среднем.
 const WEEK_NUTRITION = [
@@ -462,6 +540,8 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   renderWeekProgram();
   renderStrengthPills();
   renderWeekNutrition();
+  renderWeightTab();
+  renderMeasurementsHistory();
 
   const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");
