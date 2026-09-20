@@ -1236,6 +1236,14 @@ function renderTariffNudge() {
   }
 }
 
+// Тарифы могут называться одинаково (напр. несколько «1 месяц» с разной ценой) —
+// сравниваем по id, если он есть у обоих; иначе — по паре имя+цена, как раньше.
+function tariffMatches(a, b) {
+  if (!a || !b) return false;
+  if (a.id && b.id) return a.id === b.id;
+  return a.name === b.name && (a.price || "") === (b.price || "");
+}
+
 function renderTariffScreen() {
   const wrap = document.getElementById("tariff-content");
 
@@ -1252,7 +1260,7 @@ function renderTariffScreen() {
     : `<div class="hint-text" style="margin-bottom:16px;">Выбери тариф — тренер увидит заявку и напишет тебе, чтобы принять оплату.</div>`;
 
   const cardsHtml = TARIFFS.map((t, i) => {
-    const picked = REQUESTED_TARIFF && REQUESTED_TARIFF.name === t.name;
+    const picked = tariffMatches(REQUESTED_TARIFF, t);
     return `
     <div class="list-card tariff-card">
       <div class="list-card-body">
@@ -1275,8 +1283,8 @@ function renderTariffScreen() {
       const t = TARIFFS[Number(btn.dataset.pickTariff)];
       btn.disabled = true;
       btn.textContent = "Отправляю…";
-      await postJSON("/api/tariff-request", { name: t.name, price: t.price || "" });
-      REQUESTED_TARIFF = { name: t.name, price: t.price || "" };
+      await postJSON("/api/tariff-request", { id: t.id || "", name: t.name, price: t.price || "" });
+      REQUESTED_TARIFF = { id: t.id || "", name: t.name, price: t.price || "" };
       TARIFF_CONTACTED = false;
       renderTariffScreen();
       renderTariffNudge();
