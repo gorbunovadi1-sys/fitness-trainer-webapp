@@ -251,6 +251,7 @@ async function loadRealData() {
     if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
     MEASUREMENTS = data.measurements || [];
     ANKETA = data.anketa || {};
+    PHOTOS = data.photos || [];
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
@@ -740,6 +741,98 @@ function renderMeasurementsHistory() {
   }).join("");
 }
 
+// ---------- Фото-прогресс ----------
+let PHOTOS = [];
+const PHOTO_ANGLE_LABEL = { front: "Спереди", side: "Сбоку", back: "Сзади" };
+
+function photoUrl(photo) {
+  return `${API_BASE}/api/photo/${photo.id}?initData=${encodeURIComponent(getInitData())}`;
+}
+
+function groupPhotosByDate(photos) {
+  const groups = {};
+  photos.forEach(p => {
+    const day = p.ts.slice(0, 10);
+    (groups[day] = groups[day] || []).push(p);
+  });
+  return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function renderPhotos() {
+  const groups = groupPhotosByDate(PHOTOS);
+  const historyWrap = document.getElementById("photo-history");
+  const compareWrap = document.getElementById("photo-compare");
+
+  historyWrap.innerHTML = groups.length
+    ? groups.slice().reverse().map(([date, photos]) => `
+        <div class="photo-history-group">
+          <div class="photo-history-date">${new Date(date).toLocaleDateString("ru-RU")}</div>
+          <div class="photo-history-thumbs">
+            ${photos.map(p => `<img src="${photoUrl(p)}" class="photo-thumb" alt="${PHOTO_ANGLE_LABEL[p.angle] || p.angle}" />`).join("")}
+          </div>
+        </div>
+      `).join("")
+    : `<div class="hint-text">Фото пока нет.</div>`;
+
+  if (groups.length >= 2) {
+    const [firstDate, firstPhotos] = groups[0];
+    const [lastDate, lastPhotos] = groups[groups.length - 1];
+    compareWrap.innerHTML = `
+      <div class="photo-compare-dates">
+        <span>${new Date(firstDate).toLocaleDateString("ru-RU")}</span>
+        <span>↔</span>
+        <span>${new Date(lastDate).toLocaleDateString("ru-RU")}</span>
+      </div>
+      ${Object.keys(PHOTO_ANGLE_LABEL).map(angle => {
+        const before = firstPhotos.find(p => p.angle === angle);
+        const after = lastPhotos.find(p => p.angle === angle);
+        if (!before || !after) return "";
+        return `
+          <div class="photo-compare-row">
+            <div class="photo-compare-label">${PHOTO_ANGLE_LABEL[angle]}</div>
+            <div class="photo-compare-pair">
+              <img src="${photoUrl(before)}" class="photo-compare-img" />
+              <img src="${photoUrl(after)}" class="photo-compare-img" />
+            </div>
+          </div>
+        `;
+      }).join("")}
+    `;
+  } else {
+    compareWrap.innerHTML = `<div class="hint-text">Загрузи хотя бы 2 набора фото (в разные даты), чтобы увидеть сравнение.</div>`;
+  }
+}
+
+document.querySelectorAll(".photo-upload-slot input[type=\"file\"]").forEach(input => {
+  input.addEventListener("change", async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const status = document.getElementById("photo-upload-status");
+    status.hidden = false;
+    status.textContent = "Загружаю…";
+
+    const formData = new FormData();
+    formData.append("initData", getInitData());
+    formData.append("angle", input.dataset.angle);
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/photo`, { method: "POST", body: formData });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      PHOTOS.push(data.photo);
+      renderPhotos();
+      status.textContent = "Сохранено ✓";
+    } catch (err) {
+      status.textContent = "Ошибка загрузки — попробуй другое фото";
+    }
+
+    e.target.value = "";
+    setTimeout(() => (status.hidden = true), 2500);
+  });
+});
+
 document.querySelectorAll("[data-goto-tab]").forEach(btn => {
   btn.addEventListener("click", () => {
     const seg = document.getElementById("progress-segmented");
@@ -952,6 +1045,7 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   renderMeasurementsHistory();
   renderAnketa();
   renderAnketaProgress();
+  renderPhotos();
 
   const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile", "anketa"];
   const requestedScreen = new URLSearchParams(window.location.search).get("screen");

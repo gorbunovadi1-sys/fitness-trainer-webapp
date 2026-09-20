@@ -284,7 +284,31 @@
     </div>
 
     <div data-view-content="photos" id="progress-photos" hidden>
-      <div class="hint-text" style="margin: 24px 0;">Фото до/после по неделям появятся здесь.</div>
+      <div class="section-label">Добавить фото</div>
+      <div class="photo-upload-row">
+        <label class="photo-upload-slot">
+          <input type="file" accept="image/*" data-angle="front" hidden />
+          <span class="photo-upload-icon">+</span>
+          <span>Спереди</span>
+        </label>
+        <label class="photo-upload-slot">
+          <input type="file" accept="image/*" data-angle="side" hidden />
+          <span class="photo-upload-icon">+</span>
+          <span>Сбоку</span>
+        </label>
+        <label class="photo-upload-slot">
+          <input type="file" accept="image/*" data-angle="back" hidden />
+          <span class="photo-upload-icon">+</span>
+          <span>Сзади</span>
+        </label>
+      </div>
+      <div id="photo-upload-status" class="hint-text" hidden></div>
+
+      <div class="section-label" style="margin-top: 24px;">Сравнение: было / сейчас</div>
+      <div id="photo-compare"></div>
+
+      <div class="section-label" style="margin-top: 24px;">История</div>
+      <div id="photo-history"></div>
     </div>
   </section>
 
