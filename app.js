@@ -1,10 +1,17 @@
 // Telegram WebApp init (no-op safely outside Telegram)
+let CLIENT_NAME = "Друг";
 try {
   if (window.Telegram && window.Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
+    const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+    if (tgUser?.first_name) CLIENT_NAME = tgUser.first_name;
   }
 } catch (e) {}
+
+document.getElementById("home-greeting").textContent = `ПРИВЕТ, ${CLIENT_NAME.toUpperCase()}!`;
+document.getElementById("profile-name").textContent = CLIENT_NAME;
+document.getElementById("profile-avatar").textContent = CLIENT_NAME.charAt(0).toUpperCase();
 
 const EXERCISES = [
   { icon: "💪", name: "Жим гантелей лёжа", sets: "3 × 12", weighted: true, weight: null },
