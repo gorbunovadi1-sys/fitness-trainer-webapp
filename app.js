@@ -214,10 +214,21 @@ function lastWeightFor(name) {
   return hist[hist.length - 1].weight;
 }
 
-function normalizeProgram(rawProgram) {
+function currentWeekDays(rawProgram, programStartedAt) {
+  if (!rawProgram || !Array.isArray(rawProgram.weeks)) return rawProgram || {};
+  const weeks = rawProgram.weeks;
+  if (!weeks.length) return {};
+  if (!programStartedAt) return weeks[0].days || {};
+  const daysSince = Math.floor((Date.now() - new Date(programStartedAt).getTime()) / 86400000);
+  const weekIndex = Math.max(0, Math.floor(daysSince / 7)) % weeks.length;
+  return weeks[weekIndex].days || {};
+}
+
+function normalizeProgram(rawProgram, programStartedAt) {
+  const days = currentWeekDays(rawProgram, programStartedAt);
   const program = {};
   DAYS.forEach(day => {
-    const info = rawProgram[day] || { title: "ОТДЫХ", duration: "", exercises: [] };
+    const info = days[day] || { title: "ОТДЫХ", duration: "", exercises: [] };
     program[day] = {
       title: info.title,
       duration: info.duration,
@@ -284,7 +295,7 @@ async function loadRealData() {
     });
     if (!res.ok) return;
     const data = await res.json();
-    PROGRAM = normalizeProgram(data.program);
+    PROGRAM = normalizeProgram(data.program, data.program_started_at);
     NUTRITION_TARGET = data.nutrition_target;
     if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
     MEASUREMENTS = data.measurements || [];
