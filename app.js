@@ -769,7 +769,15 @@ function renderWeightTab() {
   } else {
     const points = buildSparklinePoints(weights);
     const last = points[points.length - 1].split(",");
+    const first = points[0].split(",");
     svg.innerHTML = `
+      <defs>
+        <linearGradient id="weight-chart-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35" />
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon fill="url(#weight-chart-fill)" points="${first[0]},120 ${points.join(" ")} ${last[0]},120" />
       <polyline fill="none" stroke="var(--accent)" stroke-width="3" points="${points.join(" ")}" />
       <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="var(--accent)" />
     `;
@@ -777,6 +785,15 @@ function renderWeightTab() {
 
   document.getElementById("weight-start").textContent = weights.length ? `${weights[0]} кг` : "—";
   document.getElementById("weight-current").textContent = weights.length ? `${weights[weights.length - 1]} кг` : "—";
+
+  const targetCard = document.getElementById("weight-target-card");
+  const targetWeight = NUTRITION_TARGET.target_weight;
+  if (targetWeight) {
+    targetCard.hidden = false;
+    document.getElementById("weight-target").textContent = `${targetWeight} кг`;
+  } else {
+    targetCard.hidden = true;
+  }
 
   const banner = document.getElementById("weight-banner");
   if (weights.length >= 2) {

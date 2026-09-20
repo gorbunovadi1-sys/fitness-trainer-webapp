@@ -253,7 +253,7 @@
     <div data-view-content="weight" id="progress-weight">
       <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none" id="weight-chart"></svg>
 
-      <div class="stat-row stat-row-2">
+      <div class="stat-row" id="weight-stat-row">
         <div class="stat-card">
           <div class="stat-value-sm" id="weight-start">—</div>
           <div class="stat-label">начальный</div>
@@ -261,6 +261,10 @@
         <div class="stat-card">
           <div class="stat-value-sm accent" id="weight-current">—</div>
           <div class="stat-label">текущий</div>
+        </div>
+        <div class="stat-card" id="weight-target-card" hidden>
+          <div class="stat-value-sm" id="weight-target">—</div>
+          <div class="stat-label">цель</div>
         </div>
       </div>
 

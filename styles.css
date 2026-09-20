@@ -118,6 +118,13 @@ html, body {
   font-size: 13px;
   letter-spacing: 1px;
 }
+.hero-sub-screen .hero-sub {
+  color: rgba(255,255,255,0.75);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+  font-size: 14px;
+}
 
 /* ---------- Daily quote ---------- */
 .quote-card {
@@ -603,8 +610,14 @@ html, body {
 }
 
 /* ---------- Check-in ---------- */
-.checkin-field { margin-bottom: 18px; }
-.checkin-label { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.checkin-field {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.checkin-label { font-weight: 700; font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .scale-10 {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
