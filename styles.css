@@ -218,6 +218,7 @@ html, body {
 /* ---------- Nutrition add row ---------- */
 .nutrition-add-row { display: flex; gap: 10px; margin-bottom: 4px; }
 .nutrition-add-row .btn-outline { margin-bottom: 0; flex: 1; }
+.nutrition-add-row .btn-primary { margin-bottom: 0; flex: 1; }
 .file-label-inline { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .nutrition-entry-row {
   display: flex;

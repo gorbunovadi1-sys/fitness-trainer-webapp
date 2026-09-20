@@ -1220,6 +1220,12 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   form.hidden = !form.hidden;
 });
 
+document.getElementById("cancel-meal-btn").addEventListener("click", () => {
+  ["kcal", "protein", "fat", "carbs"].forEach(f => (document.getElementById(`meal-${f}`).value = ""));
+  document.getElementById("meal-form").hidden = true;
+  document.getElementById("nutrition-upload-status").hidden = true;
+});
+
 document.getElementById("save-meal-btn").addEventListener("click", async () => {
   const fields = ["kcal", "protein", "fat", "carbs"];
   const payload = {};
