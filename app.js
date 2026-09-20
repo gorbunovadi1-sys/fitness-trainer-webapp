@@ -884,31 +884,112 @@ function renderAchievements() {
 }
 
 // ---------- Усиленный экран результата ----------
-function renderResultHero() {
-  const hero = document.getElementById("result-hero");
+function computeResultData() {
   const weights = MEASUREMENTS.filter(m => m.weight != null);
-  if (weights.length < 2 || !PROGRAM_STARTED_AT) {
-    hero.hidden = true;
-    return;
-  }
+  if (weights.length < 2 || !PROGRAM_STARTED_AT) return null;
 
   const start = weights[0].weight;
   const current = weights[weights.length - 1].weight;
   const delta = Math.round((current - start) * 10) / 10;
   const weeksElapsed = Math.max(1, Math.floor((Date.now() - new Date(PROGRAM_STARTED_AT).getTime()) / (7 * 86400000)));
 
-  hero.hidden = false;
-  document.getElementById("result-hero-delta").textContent = `${delta > 0 ? "+" : ""}${delta} кг`;
-  document.getElementById("result-hero-period").textContent = `за ${weeksElapsed} нед.`;
-  document.getElementById("result-hero-range").textContent = `${start} → ${current} кг`;
-
   const expectedPerWeek = DAYS.filter(d => PROGRAM[d] && PROGRAM[d].exercises.length).length;
   const compliance = expectedPerWeek ? Math.min(100, Math.round((WORKOUT_DATES.length / (expectedPerWeek * weeksElapsed)) * 100)) : null;
 
-  const stats = [{ value: WORKOUT_DATES.length, label: "тренировок" }];
-  if (compliance != null) stats.push({ value: `${compliance}%`, label: "соблюдения плана" });
+  const measureDeltas = {};
+  ["waist", "hips", "chest"].forEach(key => {
+    const first = MEASUREMENTS.find(m => m[key] != null);
+    const last = [...MEASUREMENTS].reverse().find(m => m[key] != null);
+    if (first && last && first !== last) measureDeltas[key] = Math.round((last[key] - first[key]) * 10) / 10;
+  });
+
+  return { start, current, delta, weeksElapsed, workouts: WORKOUT_DATES.length, compliance, measureDeltas };
+}
+
+function renderResultHero() {
+  const hero = document.getElementById("result-hero");
+  const data = computeResultData();
+  if (!data) {
+    hero.hidden = true;
+    return;
+  }
+
+  hero.hidden = false;
+  document.getElementById("result-hero-delta").textContent = `${data.delta > 0 ? "+" : ""}${data.delta} кг`;
+  document.getElementById("result-hero-period").textContent = `за ${data.weeksElapsed} нед.`;
+  document.getElementById("result-hero-range").textContent = `${data.start} → ${data.current} кг`;
+
+  const stats = [{ value: data.workouts, label: "тренировок" }];
+  if (data.compliance != null) stats.push({ value: `${data.compliance}%`, label: "соблюдения плана" });
   document.getElementById("result-hero-stats").innerHTML = stats.map(s => `<div><b>${s.value}</b><span>${s.label}</span></div>`).join("");
 }
+
+// ---------- Карточка результата для Stories ----------
+const MEASURE_SHARE_LABELS = { waist: "см в талии", hips: "см в бёдрах", chest: "см в груди" };
+
+async function drawShareCard() {
+  const data = computeResultData();
+  if (!data) return;
+
+  try { await document.fonts.ready; } catch (e) {}
+
+  const canvas = document.getElementById("share-canvas");
+  const W = 1080, H = 1350;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#0d0d0d";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#c6ff3d";
+  ctx.fillRect(0, 0, W, 10);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#9a9a9a";
+  ctx.font = "700 40px Inter, sans-serif";
+  ctx.fillText(`${data.weeksElapsed} НЕДЕЛЬ`, W / 2, 260);
+
+  ctx.fillStyle = "#c6ff3d";
+  ctx.font = "800 150px Inter, sans-serif";
+  ctx.fillText(`${data.delta > 0 ? "+" : ""}${data.delta} кг`, W / 2, 440);
+
+  ctx.fillStyle = "#f5f5f5";
+  ctx.font = "600 42px Inter, sans-serif";
+  ctx.fillText(`${data.start} → ${data.current} кг`, W / 2, 520);
+
+  const lines = [];
+  Object.entries(data.measureDeltas).forEach(([key, val]) => {
+    lines.push(`${val > 0 ? "+" : ""}${val} ${MEASURE_SHARE_LABELS[key]}`);
+  });
+  lines.push(`${data.workouts} тренировок`);
+  if (data.compliance != null) lines.push(`${data.compliance}% соблюдения программы`);
+
+  ctx.font = "600 44px Inter, sans-serif";
+  let y = 650;
+  lines.forEach(line => {
+    ctx.fillText(line, W / 2, y);
+    y += 76;
+  });
+
+  ctx.fillStyle = "#c6ff3d";
+  ctx.font = "800 38px Inter, sans-serif";
+  ctx.fillText("POBEDINSKY FIT", W / 2, H - 80);
+}
+
+document.getElementById("share-result-btn").addEventListener("click", async () => {
+  document.getElementById("share-card-modal").hidden = false;
+  await drawShareCard();
+});
+document.getElementById("share-close-btn").addEventListener("click", () => {
+  document.getElementById("share-card-modal").hidden = true;
+});
+document.getElementById("share-download-btn").addEventListener("click", () => {
+  const canvas = document.getElementById("share-canvas");
+  const link = document.createElement("a");
+  link.download = "moy-progress.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
 
 // ---------- «Что изменил тренер» ----------
 function maybeShowTrainerActionModal() {

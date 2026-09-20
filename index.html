@@ -295,6 +295,7 @@
       <div class="result-hero-period" id="result-hero-period"></div>
       <div class="result-hero-range" id="result-hero-range"></div>
       <div class="result-hero-stats" id="result-hero-stats"></div>
+      <button class="btn-outline" id="share-result-btn" style="margin-top:16px;">📤 Поделиться результатом</button>
     </div>
 
     <div class="segmented" id="progress-segmented">
@@ -584,6 +585,14 @@
     <h3>Тренер обновил твой план</h3>
     <p id="trainer-action-text"></p>
     <button class="btn-primary" id="trainer-action-ok-btn">Понятно</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="share-card-modal" hidden>
+  <div class="modal-card" style="max-width:300px;">
+    <canvas id="share-canvas" style="width:100%;border-radius:14px;margin-bottom:16px;display:block;"></canvas>
+    <button class="btn-primary" id="share-download-btn">⬇ Скачать картинку</button>
+    <button class="btn-outline" id="share-close-btn">Закрыть</button>
   </div>
 </div>
 
