@@ -36,10 +36,12 @@ async function postJSON(path, body) {
   }
 }
 
-// ---------- Program (составляет тренер, на MVP — заглушка вместо реального редактора) ----------
+// ---------- Program ----------
+// Реальные данные приходят из /api/bootstrap (тренер вносит их в /admin).
+// DEMO_* — то, что видно, пока бэкенд недоступен (например, открыли вне Telegram без сети).
 const DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
-const PROGRAM = {
+const DEMO_PROGRAM = {
   "Пн": {
     title: "НИЗ ТЕЛА", duration: "45 мин",
     exercises: [
@@ -80,8 +82,7 @@ const PROGRAM = {
   "Вс": { title: "ОТДЫХ", duration: "", exercises: [] },
 };
 
-// История рабочих весов по упражнениям — на MVP заглушка, дальше наполняется из /api/workout-log
-const EXERCISE_HISTORY = {
+const DEMO_EXERCISE_HISTORY = {
   "Жим гантелей лёжа": [
     { date: "2026-08-24", weight: 17.5 },
     { date: "2026-08-31", weight: 20 },
@@ -99,10 +100,53 @@ const EXERCISE_HISTORY = {
   ],
 };
 
+const DEMO_NUTRITION_TARGET = { kcal: 1800, protein: 130, fat: 60, carbs: 180 };
+
+let PROGRAM = DEMO_PROGRAM;
+let EXERCISE_HISTORY = DEMO_EXERCISE_HISTORY;
+let NUTRITION_TARGET = DEMO_NUTRITION_TARGET;
+
 function lastWeightFor(name) {
   const hist = EXERCISE_HISTORY[name];
   if (!hist || !hist.length) return null;
   return hist[hist.length - 1].weight;
+}
+
+function normalizeProgram(rawProgram) {
+  const program = {};
+  DAYS.forEach(day => {
+    const info = rawProgram[day] || { title: "ОТДЫХ", duration: "", exercises: [] };
+    program[day] = {
+      title: info.title,
+      duration: info.duration,
+      exercises: (info.exercises || []).map(e => ({
+        name: e.name,
+        sets: e.sets,
+        weighted: !!e.weighted,
+        weight: null,
+        done: false,
+        icon: e.weighted ? "💪" : "⏱",
+      })),
+    };
+  });
+  return program;
+}
+
+async function loadRealData() {
+  try {
+    const res = await fetch(API_BASE + "/api/bootstrap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData: getInitData() }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    PROGRAM = normalizeProgram(data.program);
+    NUTRITION_TARGET = data.nutrition_target;
+    if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
+  } catch (e) {
+    console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
+  }
 }
 
 const RU_DAY_BY_JS_INDEX = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -344,9 +388,9 @@ function renderWeekNutrition() {
 
   document.getElementById("week-summary").innerHTML = `
     <div class="week-summary-row"><span>Калории (среднее/день)</span><span>${Math.round(avgKcal)} ккал ${fmtDelta(avgKcal, NUTRITION_TARGET.kcal, "ккал")}</span></div>
-    <div class="week-summary-row"><span>Белки</span><span>${Math.round(avgP)} г ${fmtDelta(avgP, NUTRITION_TARGET.p, "г")}</span></div>
-    <div class="week-summary-row"><span>Жиры</span><span>${Math.round(avgF)} г ${fmtDelta(avgF, NUTRITION_TARGET.f, "г")}</span></div>
-    <div class="week-summary-row"><span>Углеводы</span><span>${Math.round(avgC)} г ${fmtDelta(avgC, NUTRITION_TARGET.c, "г")}</span></div>
+    <div class="week-summary-row"><span>Белки</span><span>${Math.round(avgP)} г ${fmtDelta(avgP, NUTRITION_TARGET.protein, "г")}</span></div>
+    <div class="week-summary-row"><span>Жиры</span><span>${Math.round(avgF)} г ${fmtDelta(avgF, NUTRITION_TARGET.fat, "г")}</span></div>
+    <div class="week-summary-row"><span>Углеводы</span><span>${Math.round(avgC)} г ${fmtDelta(avgC, NUTRITION_TARGET.carbs, "г")}</span></div>
     <div class="week-summary-row"><span>Дней учтено</span><span>${daysCounted} из 7</span></div>
   `;
 
@@ -408,11 +452,18 @@ document.getElementById("add-meal-btn").addEventListener("click", () => {
   alert("MVP: пришли скрин/итог КБЖУ прямо в чат с ботом — тренер увидит это в твоей карточке.");
 });
 
-selectWorkoutDay(currentWorkoutDay);
-renderWeekProgram();
-renderStrengthPills();
-renderWeekNutrition();
+(async () => {
+  await loadRealData();
 
-const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile"];
-const requestedScreen = new URLSearchParams(window.location.search).get("screen");
-showScreen(KNOWN_SCREENS.includes(requestedScreen) ? requestedScreen : "home");
+  if (!PROGRAM[currentWorkoutDay]) currentWorkoutDay = "Пн";
+  document.getElementById("nutrition-goal-kcal").textContent = NUTRITION_TARGET.kcal;
+
+  selectWorkoutDay(currentWorkoutDay);
+  renderWeekProgram();
+  renderStrengthPills();
+  renderWeekNutrition();
+
+  const KNOWN_SCREENS = ["home", "workouts", "nutrition", "progress", "checkin", "profile"];
+  const requestedScreen = new URLSearchParams(window.location.search).get("screen");
+  showScreen(KNOWN_SCREENS.includes(requestedScreen) ? requestedScreen : "home");
+})();
