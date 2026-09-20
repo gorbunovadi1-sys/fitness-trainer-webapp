@@ -61,19 +61,21 @@
 
   <!-- ===== WORKOUTS ===== -->
   <section class="screen" id="screen-workouts" data-screen hidden>
-    <div class="topbar">
-      <button class="back-btn" data-nav="home">←</button>
-      <div class="topbar-title">Тренировка</div>
-      <div class="topbar-spacer"></div>
+    <div class="hero hero-sub-screen">
+      <div class="hero-photo"></div>
+      <img class="hero-img" src="assets/workouts.jpg" alt="" onerror="this.remove()" />
+      <div class="hero-overlay"></div>
+      <div class="hero-topbar">
+        <button class="back-btn back-btn-overlay" data-nav="home">←</button>
+      </div>
+      <div class="hero-text">
+        <div class="hero-greeting">ВЕРХ ТЕЛА</div>
+        <div class="hero-sub">⏱ 40 мин &nbsp;·&nbsp; 🔥 8 упражнений</div>
+      </div>
     </div>
 
     <div class="day-pills">
       <span>Пн</span><span>Вт</span><span class="active">Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-    </div>
-
-    <div class="workout-head">
-      <div class="workout-title">ВЕРХ ТЕЛА</div>
-      <div class="workout-meta">⏱ 40 мин &nbsp;·&nbsp; 🔥 8 упражнений</div>
     </div>
 
     <button class="btn-primary">Начать</button>
@@ -133,12 +135,18 @@
 
   <!-- ===== PROGRESS ===== -->
   <section class="screen" id="screen-progress" data-screen hidden>
-    <div class="topbar">
-      <button class="back-btn" data-nav="home">←</button>
-      <div class="topbar-title">ТВОЙ ПРОГРЕСС</div>
-      <div class="topbar-spacer"></div>
+    <div class="hero hero-sub-screen">
+      <div class="hero-photo"></div>
+      <img class="hero-img" src="assets/progress.jpg" alt="" onerror="this.remove()" />
+      <div class="hero-overlay"></div>
+      <div class="hero-topbar">
+        <button class="back-btn back-btn-overlay" data-nav="home">←</button>
+      </div>
+      <div class="hero-text">
+        <div class="hero-greeting">ТВОЙ ПРОГРЕСС</div>
+        <div class="hero-sub">Результаты, которыми можно гордиться</div>
+      </div>
     </div>
-    <div class="progress-sub">Результаты, которыми можно гордиться</div>
 
     <div class="segmented">
       <span class="active">Вес</span><span>Замеры</span><span>Фото</span>

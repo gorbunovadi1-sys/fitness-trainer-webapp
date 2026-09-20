@@ -72,6 +72,27 @@ html, body {
   inset: 0;
   background: linear-gradient(180deg, rgba(13,13,13,0.05) 30%, rgba(13,13,13,0.9) 100%);
 }
+
+/* ---------- Hero used as header on sub-screens (Тренировки, Прогресс) ---------- */
+.hero-sub-screen { align-items: flex-end; }
+.hero-topbar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 2;
+  display: flex;
+}
+.back-btn-overlay {
+  background: rgba(13,13,13,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-color: rgba(255,255,255,0.15);
+}
+
+#screen-workouts .hero-img { object-position: 50% 20%; }
+#screen-progress .hero-img { object-position: center; }
+
 .hero-text {
   position: relative;
   padding: 20px;
