@@ -53,33 +53,34 @@
       <div class="goal-card-numbers" id="goal-card-numbers"></div>
     </div>
 
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-value">12</div>
-        <div class="stat-label">дней подряд</div>
+    <div class="today-card" id="today-card">
+      <div class="today-card-title">СЕГОДНЯ</div>
+      <div class="today-row" id="today-row-nutrition">
+        <span class="today-mark" id="today-mark-nutrition">○</span>
+        <span class="today-row-text">Питание — <b id="today-nutrition-text">0 / 1800 ккал</b></span>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">3/4</div>
-        <div class="stat-label">тренировки</div>
+      <div class="today-row" id="today-row-workout">
+        <span class="today-mark" id="today-mark-workout">○</span>
+        <span class="today-row-text">Тренировка — <b id="today-workout-text">—</b></span>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">1450</div>
-        <div class="stat-label">ккал</div>
+      <div class="today-row" id="today-row-checkin" hidden>
+        <span class="today-mark">○</span>
+        <span class="today-row-text">Заполнить еженедельный чек-ин</span>
       </div>
     </div>
 
-    <button class="btn-primary" data-nav="workouts">Перейти к тренировке →</button>
+    <button class="btn-primary" id="today-cta-btn" data-nav="workouts">Начать тренировку →</button>
 
     <div class="list-card" data-nav="nutrition">
       <div class="list-card-icon">🍽</div>
       <div class="list-card-body">
         <div class="list-card-title">Дневник питания</div>
-        <div class="list-card-sub">Заполни за сегодня</div>
+        <div class="list-card-sub" id="nutrition-card-sub">Заполни за сегодня</div>
       </div>
       <div class="list-card-plus">+</div>
     </div>
 
-    <div class="list-card" id="checkin-banner" data-nav="checkin">
+    <div class="list-card" id="checkin-banner" data-nav="checkin" hidden>
       <div class="list-card-icon">📋</div>
       <div class="list-card-body">
         <div class="list-card-title">Еженедельный чек-ин</div>
@@ -127,6 +128,10 @@
     </div>
 
     <div data-view-content="week" id="workout-week" hidden>
+      <div class="week-summary-header">
+        <span id="week-completion-label">0 из 0 выполнено</span>
+        <div class="goal-progress-bar"><div class="goal-progress-fill" id="week-completion-fill"></div></div>
+      </div>
       <div class="section-label">Программа на неделю</div>
       <div id="week-program-list" class="week-program-list"></div>
     </div>
@@ -182,8 +187,18 @@
           <div class="stat-label">подходов</div>
         </div>
       </div>
+      <div class="section-label">Как прошло?</div>
+      <div class="mood-row" id="complete-mood-row">
+        <button class="mood-btn" data-mood="hard">😩<span>Тяжело</span></button>
+        <button class="mood-btn" data-mood="ok">🙂<span>Нормально</span></button>
+        <button class="mood-btn" data-mood="great">🔥<span>Отлично</span></button>
+      </div>
+      <div class="section-label">Насколько тяжело в целом? (RPE)</div>
+      <div class="scale-10" id="complete-rpe-scale" data-scale></div>
+
       <div class="complete-quote" id="complete-quote">Ещё один шаг к твоей цели.</div>
       <button class="btn-primary" id="complete-finish-btn">Завершить</button>
+      <button class="btn-outline" id="complete-contact-trainer-btn">Есть вопрос по тренировке? Написать тренеру</button>
     </div>
   </section>
 
@@ -245,6 +260,7 @@
 
       <div id="nutrition-upload-status" class="hint-text" hidden></div>
       <div class="hint-text">Можно вписать КБЖУ вручную или прислать скрин из FatSecret — калории, белки, жиры и углеводы попробуем распознать автоматически, останется проверить и сохранить.</div>
+      <button class="btn-outline" id="nutrition-contact-trainer-btn">Есть вопрос по рациону? Написать тренеру</button>
     </div>
 
     <div data-view-content="week" id="nutrition-week" hidden>
@@ -272,6 +288,13 @@
         <div class="hero-greeting">ТВОЙ ПРОГРЕСС</div>
         <div class="hero-sub">Результаты, которыми можно гордиться</div>
       </div>
+    </div>
+
+    <div class="result-hero" id="result-hero" hidden>
+      <div class="result-hero-delta" id="result-hero-delta">—</div>
+      <div class="result-hero-period" id="result-hero-period"></div>
+      <div class="result-hero-range" id="result-hero-range"></div>
+      <div class="result-hero-stats" id="result-hero-stats"></div>
     </div>
 
     <div class="segmented" id="progress-segmented">
@@ -440,6 +463,8 @@
       </div>
     </div>
 
+    <div class="achievements-grid" id="achievements-grid"></div>
+
     <div class="menu-list">
       <div class="menu-item" data-nav="anketa">📝 Моя анкета</div>
       <div class="menu-item" data-nav="tariff">💳 Тариф</div>
@@ -550,6 +575,15 @@
     <p>Тренер получил твой выбор тарифа. Напиши ему сам(а) — так быстрее обсудите оплату и детали, текст уже готов.</p>
     <button class="btn-primary" id="tariff-modal-contact-btn">💬 Написать тренеру</button>
     <button class="btn-outline" id="tariff-modal-close-btn">Позже</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="trainer-action-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-icon">✏️</div>
+    <h3>Тренер обновил твой план</h3>
+    <p id="trainer-action-text"></p>
+    <button class="btn-primary" id="trainer-action-ok-btn">Понятно</button>
   </div>
 </div>
 

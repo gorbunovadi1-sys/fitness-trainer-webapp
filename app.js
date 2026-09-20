@@ -290,6 +290,10 @@ let TARIFFS = [];
 let REQUESTED_TARIFF = null;
 let TARIFF_CONTACTED = false;
 let SUBSCRIPTION_UNTIL = null;
+let WORKOUT_DATES = [];
+let CHECKINS = [];
+let PROGRAM_STARTED_AT = null;
+let TRAINER_ACTION_PENDING = null;
 
 async function loadRealData() {
   try {
@@ -314,6 +318,10 @@ async function loadRealData() {
     REQUESTED_TARIFF = data.requested_tariff || null;
     TARIFF_CONTACTED = !!data.tariff_contacted;
     SUBSCRIPTION_UNTIL = data.subscription_until || null;
+    WORKOUT_DATES = data.workout_dates || [];
+    CHECKINS = data.checkins || [];
+    PROGRAM_STARTED_AT = data.program_started_at || null;
+    TRAINER_ACTION_PENDING = data.trainer_action_pending || null;
   } catch (e) {
     console.warn("Не удалось загрузить данные с бэкенда, показываю демо:", e);
   }
@@ -505,6 +513,8 @@ function startWorkoutSession() {
     index: 0,
     startedAt: Date.now(),
   };
+  document.querySelectorAll("#complete-mood-row .mood-btn").forEach(b => b.classList.remove("selected"));
+  document.querySelectorAll("#complete-rpe-scale span").forEach(s => s.classList.remove("selected"));
   showScreen("session");
   renderSessionExercise();
 }
@@ -619,7 +629,11 @@ function finishWorkoutSession() {
     };
   });
 
-  postJSON("/api/workout-log", { exercises: payloadExercises });
+  const selectedMoodBtn = document.querySelector("#complete-mood-row .mood-btn.selected");
+  const mood = selectedMoodBtn ? selectedMoodBtn.dataset.mood : null;
+  const overallRpe = document.querySelectorAll("#complete-rpe-scale span.selected").length || null;
+  postJSON("/api/workout-log", { exercises: payloadExercises, mood, overall_rpe: overallRpe });
+  WORKOUT_DATES.push(new Date().toISOString());
 
   document.getElementById("complete-duration").textContent = durationMin;
   document.getElementById("complete-exercises").textContent = SESSION.exercises.length;
@@ -631,7 +645,17 @@ function finishWorkoutSession() {
 document.getElementById("complete-finish-btn").addEventListener("click", () => {
   SESSION = null;
   renderExercises(PROGRAM[currentWorkoutDay].exercises);
+  renderTodayCard();
+  renderAchievements();
   showScreen("home");
+});
+
+document.getElementById("complete-contact-trainer-btn").addEventListener("click", () => {
+  openTrainerChat(`Миш, вопрос по сегодняшней тренировке «${PROGRAM[currentWorkoutDay].title}»...`);
+});
+
+document.getElementById("nutrition-contact-trainer-btn").addEventListener("click", () => {
+  openTrainerChat("Миш, вопрос по рациону...");
 });
 
 function renderExercises(exercises) {
@@ -724,23 +748,180 @@ function selectWorkoutDay(day) {
   renderExercises(info.exercises);
 }
 
+function currentWeekDates() {
+  const today = new Date();
+  const dow = (today.getDay() + 6) % 7; // 0 = понедельник
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow);
+  return DAYS.map((_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
+}
+
 function renderWeekProgram() {
+  const weekDates = currentWeekDates();
+  const loggedDates = new Set(WORKOUT_DATES.map(dateKey));
   const wrap = document.getElementById("week-program-list");
-  wrap.innerHTML = DAYS.map(d => {
+
+  let doneCount = 0;
+  let totalScheduled = 0;
+
+  wrap.innerHTML = DAYS.map((d, i) => {
     const info = PROGRAM[d];
     const isRest = info.exercises.length === 0;
+    const isDone = !isRest && loggedDates.has(weekDates[i]);
+    if (!isRest) {
+      totalScheduled++;
+      if (isDone) doneCount++;
+    }
     return `
       <div class="week-program-day">
         <div class="week-program-day-head">
           <span class="week-program-day-name${d === currentWorkoutDay ? " is-today" : ""}">${d}</span>
           <span class="week-program-day-title">${info.title}</span>
+          ${!isRest ? `<span class="week-program-day-check${isDone ? " done" : ""}">${isDone ? "✓" : "○"}</span>` : ""}
         </div>
         ${isRest ? "" : `<div class="week-program-exercises">${info.exercises.map(e => `
           <div class="week-program-ex-row"><span>${e.name}</span><span>${e.sets}</span></div>
         `).join("")}</div>`}
       </div>`;
   }).join("");
+
+  document.getElementById("week-completion-label").textContent = `${doneCount} из ${totalScheduled} выполнено`;
+  document.getElementById("week-completion-fill").style.width = totalScheduled ? `${Math.round((doneCount / totalScheduled) * 100)}%` : "0%";
 }
+
+// ---------- «Сегодня» на главном ----------
+function renderTodayCard() {
+  const todayStr = todayDateStr();
+  const nutritionSum = sumNutrition(nutritionLogsForDate(todayStr));
+  const nutritionDone = nutritionSum.kcal > 0;
+  document.getElementById("today-mark-nutrition").textContent = nutritionDone ? "✓" : "○";
+  document.getElementById("today-mark-nutrition").classList.toggle("done", nutritionDone);
+  document.getElementById("today-nutrition-text").textContent = `${Math.round(nutritionSum.kcal)} / ${NUTRITION_TARGET.kcal} ккал`;
+  document.getElementById("nutrition-card-sub").textContent = nutritionDone
+    ? `Внесено: ${Math.round(nutritionSum.kcal)} ккал`
+    : "Заполни за сегодня";
+
+  const todayInfo = PROGRAM[currentWorkoutDay] || { title: "—", exercises: [] };
+  const isRestDay = !todayInfo.exercises.length;
+  const workoutDoneToday = WORKOUT_DATES.some(ts => dateKey(ts) === todayStr);
+  const workoutMark = document.getElementById("today-mark-workout");
+  workoutMark.textContent = (isRestDay || workoutDoneToday) ? "✓" : "○";
+  workoutMark.classList.toggle("done", isRestDay || workoutDoneToday);
+  document.getElementById("today-workout-text").textContent = isRestDay ? "день отдыха" : todayInfo.title;
+
+  const lastCheckin = CHECKINS.length ? CHECKINS[CHECKINS.length - 1] : null;
+  const daysSinceCheckin = lastCheckin ? Math.floor((Date.now() - new Date(lastCheckin.ts).getTime()) / 86400000) : null;
+  const checkinDue = daysSinceCheckin === null || daysSinceCheckin >= 7;
+  document.getElementById("today-row-checkin").hidden = !checkinDue;
+  document.getElementById("checkin-banner").hidden = !checkinDue;
+
+  const cta = document.getElementById("today-cta-btn");
+  if (!isRestDay && !workoutDoneToday) {
+    cta.textContent = "Начать тренировку →";
+    cta.dataset.nav = "workouts";
+    cta.hidden = false;
+  } else if (!nutritionDone) {
+    cta.textContent = "Внести питание →";
+    cta.dataset.nav = "nutrition";
+    cta.hidden = false;
+  } else if (checkinDue) {
+    cta.textContent = "Пройти чек-ин →";
+    cta.dataset.nav = "checkin";
+    cta.hidden = false;
+  } else {
+    cta.hidden = true;
+  }
+}
+
+// ---------- Достижения ----------
+function computeStreakDays() {
+  const activeDates = new Set([...WORKOUT_DATES.map(dateKey), ...NUTRITION_LOGS.map(n => dateKey(n.ts))]);
+  let streak = 0;
+  const cursor = new Date();
+  if (!activeDates.has(cursor.toISOString().slice(0, 10))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  while (activeDates.has(cursor.toISOString().slice(0, 10))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function computeWeeksWithoutMissedCheckin() {
+  if (!CHECKINS.length) return 0;
+  const sorted = CHECKINS.map(c => new Date(c.ts).getTime()).sort((a, b) => b - a);
+  let weeks = 0;
+  let windowEnd = Date.now();
+  while (weeks <= 52) {
+    const windowStart = windowEnd - 7 * 86400000;
+    if (!sorted.some(t => t >= windowStart && t <= windowEnd)) break;
+    weeks++;
+    windowEnd = windowStart;
+  }
+  return weeks;
+}
+
+function renderAchievements() {
+  const wrap = document.getElementById("achievements-grid");
+  if (!wrap) return;
+
+  const weights = MEASUREMENTS.filter(m => m.weight != null).map(m => m.weight);
+  const weightDelta = weights.length > 1 ? Math.round((weights[weights.length - 1] - weights[0]) * 10) / 10 : null;
+
+  const cards = [
+    { value: `🔥 ${computeStreakDays()}`, label: "дней подряд" },
+    { value: `🏆 ${WORKOUT_DATES.length}`, label: "тренировок выполнено" },
+  ];
+  if (weightDelta != null) cards.push({ value: `${weightDelta > 0 ? "+" : ""}${weightDelta} кг`, label: "с начала программы" });
+  cards.push({ value: `${computeWeeksWithoutMissedCheckin()}`, label: "нед. без пропущенного чек-ина" });
+
+  wrap.innerHTML = cards.map(c => `<div class="achievement-card"><div class="achievement-value">${c.value}</div><div class="achievement-label">${c.label}</div></div>`).join("");
+}
+
+// ---------- Усиленный экран результата ----------
+function renderResultHero() {
+  const hero = document.getElementById("result-hero");
+  const weights = MEASUREMENTS.filter(m => m.weight != null);
+  if (weights.length < 2 || !PROGRAM_STARTED_AT) {
+    hero.hidden = true;
+    return;
+  }
+
+  const start = weights[0].weight;
+  const current = weights[weights.length - 1].weight;
+  const delta = Math.round((current - start) * 10) / 10;
+  const weeksElapsed = Math.max(1, Math.floor((Date.now() - new Date(PROGRAM_STARTED_AT).getTime()) / (7 * 86400000)));
+
+  hero.hidden = false;
+  document.getElementById("result-hero-delta").textContent = `${delta > 0 ? "+" : ""}${delta} кг`;
+  document.getElementById("result-hero-period").textContent = `за ${weeksElapsed} нед.`;
+  document.getElementById("result-hero-range").textContent = `${start} → ${current} кг`;
+
+  const expectedPerWeek = DAYS.filter(d => PROGRAM[d] && PROGRAM[d].exercises.length).length;
+  const compliance = expectedPerWeek ? Math.min(100, Math.round((WORKOUT_DATES.length / (expectedPerWeek * weeksElapsed)) * 100)) : null;
+
+  const stats = [{ value: WORKOUT_DATES.length, label: "тренировок" }];
+  if (compliance != null) stats.push({ value: `${compliance}%`, label: "соблюдения плана" });
+  document.getElementById("result-hero-stats").innerHTML = stats.map(s => `<div><b>${s.value}</b><span>${s.label}</span></div>`).join("");
+}
+
+// ---------- «Что изменил тренер» ----------
+function maybeShowTrainerActionModal() {
+  if (!TRAINER_ACTION_PENDING) return;
+  document.getElementById("trainer-action-text").textContent = TRAINER_ACTION_PENDING.summary;
+  document.getElementById("trainer-action-modal").hidden = false;
+}
+
+document.getElementById("trainer-action-ok-btn").addEventListener("click", async () => {
+  document.getElementById("trainer-action-modal").hidden = true;
+  await postJSON("/api/actions-seen", {});
+  TRAINER_ACTION_PENDING = null;
+});
 
 // ---------- Силовой прогресс ----------
 function buildSparklinePoints(values, width = 320, height = 120, pad = 14) {
@@ -962,6 +1143,8 @@ document.getElementById("submit-measurement").addEventListener("click", async ()
   fields.forEach(f => (document.getElementById(`m-${f}`).value = ""));
   renderWeightTab();
   renderMeasurementsHistory();
+  renderResultHero();
+  renderAchievements();
 
   const badge = document.getElementById("measurement-saved");
   badge.hidden = false;
@@ -1056,6 +1239,7 @@ function renderNutritionToday() {
   document.getElementById("nutrition-today-protein").textContent = `${Math.round(sums.protein)} г`;
   document.getElementById("nutrition-today-fat").textContent = `${Math.round(sums.fat)} г`;
   document.getElementById("nutrition-today-carbs").textContent = `${Math.round(sums.carbs)} г`;
+  renderTodayCard();
 
   const photosToday = PHOTOS.filter(p => p.angle === "meal" && dateKey(p.ts) === todayStr);
   const entries = [
@@ -1326,6 +1510,13 @@ document.querySelectorAll("[data-scale]").forEach(scale => {
   });
 });
 
+document.querySelectorAll("#complete-mood-row .mood-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#complete-mood-row .mood-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+  });
+});
+
 document.getElementById("submit-checkin").addEventListener("click", () => {
   const values = { sleep: 0, stress: 0, mood: 0, compliance: 0 };
   document.querySelectorAll(".checkin-field").forEach(field => {
@@ -1338,6 +1529,9 @@ document.getElementById("submit-checkin").addEventListener("click", () => {
   });
 
   postJSON("/api/checkin", values);
+  CHECKINS.push({ ts: new Date().toISOString(), ...values });
+  renderTodayCard();
+  renderAchievements();
 
   try {
     if (window.Telegram && window.Telegram.WebApp) {
@@ -1503,6 +1697,10 @@ renderAiChatLog();
   renderNutritionToday();
   renderGoalCard();
   renderTariffScreen();
+  renderTodayCard();
+  renderAchievements();
+  renderResultHero();
+  maybeShowTrainerActionModal();
   document.getElementById("settings-workout-reminders").checked = WORKOUT_REMINDERS_ENABLED;
   document.getElementById("settings-nutrition-reminders").checked = NUTRITION_REMINDERS_ENABLED;
   document.getElementById("settings-measurement-reminders").checked = MEASUREMENT_REMINDERS_ENABLED;
