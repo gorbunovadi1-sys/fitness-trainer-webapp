@@ -83,7 +83,7 @@
     <div data-view-content="day" id="workout-day">
       <div class="day-pills" id="workout-day-pills"></div>
 
-      <button class="btn-primary">Начать</button>
+      <button class="btn-primary" id="start-workout-btn">Начать</button>
 
       <div class="section-label">Упражнения</div>
       <div class="exercise-list" id="exercise-list"></div>
@@ -92,6 +92,61 @@
     <div data-view-content="week" id="workout-week" hidden>
       <div class="section-label">Программа на неделю</div>
       <div id="week-program-list" class="week-program-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== WORKOUT SESSION (пошаговое выполнение) ===== -->
+  <section class="screen" id="screen-session" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" id="session-close">✕</button>
+      <div class="topbar-title" id="session-progress-label">Упражнение 1 из 8</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="session-progress-bar"><div class="session-progress-fill" id="session-progress-fill"></div></div>
+
+    <div class="session-exercise-icon" id="session-exercise-icon">💪</div>
+    <div class="session-exercise-name" id="session-exercise-name">—</div>
+    <div class="session-exercise-target" id="session-exercise-target">—</div>
+
+    <div class="tip-text" id="session-tip">Работай подконтрольно, следи за техникой.</div>
+
+    <div id="session-sets-block">
+      <div class="section-label">Подходы</div>
+      <div id="session-sets-list" class="session-sets-list"></div>
+    </div>
+
+    <div id="session-rpe-block">
+      <div class="section-label">RPE — насколько тяжело?</div>
+      <div class="scale-10" id="session-rpe-scale"></div>
+    </div>
+
+    <div class="section-label">Комментарий (необязательно)</div>
+    <textarea id="session-comment" class="session-comment" placeholder="Как прошло? Что-то мешало?"></textarea>
+
+    <button class="btn-primary" id="session-next-btn">Готово →</button>
+  </section>
+
+  <!-- ===== WORKOUT COMPLETE ===== -->
+  <section class="screen" id="screen-session-complete" data-screen hidden>
+    <div class="complete-wrap">
+      <div class="complete-check">✓</div>
+      <div class="complete-title">ТРЕНИРОВКА<br />ВЫПОЛНЕНА</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-value" id="complete-duration">—</div>
+          <div class="stat-label">минут</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="complete-exercises">—</div>
+          <div class="stat-label">упражнений</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="complete-sets">—</div>
+          <div class="stat-label">подходов</div>
+        </div>
+      </div>
+      <div class="complete-quote" id="complete-quote">Ещё один шаг к твоей цели.</div>
+      <button class="btn-primary" id="complete-finish-btn">Завершить</button>
     </div>
   </section>
 

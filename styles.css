@@ -560,6 +560,103 @@ html, body {
   border-color: var(--accent);
 }
 
+/* ---------- Workout session ---------- */
+.session-progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.session-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.session-exercise-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  margin-bottom: 14px;
+}
+.session-exercise-name { font-size: 22px; font-weight: 800; }
+.session-exercise-target { color: var(--text-dim); font-size: 14px; margin-top: 2px; margin-bottom: 14px; }
+
+.session-sets-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.session-set-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.session-set-num {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.session-set-weight, .session-set-reps { width: 64px; flex-shrink: 0; }
+
+#session-rpe-block { margin-bottom: 20px; }
+
+.session-comment {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+  margin-bottom: 20px;
+}
+
+/* ---------- Workout complete ---------- */
+.complete-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: 40px;
+}
+.complete-check {
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0d0d0d;
+  font-size: 40px;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24px;
+}
+.complete-title {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 24px;
+}
+.complete-wrap .stat-row { width: 100%; margin-bottom: 20px; }
+.complete-quote {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+.complete-wrap .btn-primary { width: 100%; }
+
 /* ---------- Measurement form ---------- */
 .measurement-form {
   display: grid;

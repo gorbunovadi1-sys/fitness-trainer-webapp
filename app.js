@@ -266,6 +266,167 @@ function saveWorkoutLog() {
   });
 }
 
+// ---------- Пошаговое выполнение тренировки (подходы, RPE, комментарий) ----------
+function parseSetsTarget(setsStr) {
+  const m = /(\d+)\s*[×xX]\s*(\d+)/.exec(setsStr || "");
+  if (!m) return null;
+  return { count: Number(m[1]), reps: Number(m[2]) };
+}
+
+let SESSION = null;
+
+function buildSessionExercises(exercises) {
+  return exercises.map(ex => {
+    const target = ex.weighted ? parseSetsTarget(ex.sets) : null;
+    return {
+      name: ex.name,
+      sets: ex.sets,
+      weighted: ex.weighted,
+      targetSets: target,
+      setLogs: target ? Array.from({ length: target.count }, () => ({ weight: null, reps: null })) : null,
+      rpe: null,
+      comment: "",
+    };
+  });
+}
+
+function startWorkoutSession() {
+  const exercises = PROGRAM[currentWorkoutDay].exercises;
+  if (!exercises.length) return;
+  SESSION = {
+    exercises: buildSessionExercises(exercises),
+    index: 0,
+    startedAt: Date.now(),
+  };
+  showScreen("session");
+  renderSessionExercise();
+}
+
+function renderSessionExercise() {
+  const ex = SESSION.exercises[SESSION.index];
+  const total = SESSION.exercises.length;
+
+  document.getElementById("session-progress-label").textContent = `Упражнение ${SESSION.index + 1} из ${total}`;
+  document.getElementById("session-progress-fill").style.width = `${(SESSION.index / total) * 100}%`;
+  document.getElementById("session-exercise-icon").textContent = ex.weighted ? "💪" : "⏱";
+  document.getElementById("session-exercise-name").textContent = ex.name;
+  document.getElementById("session-exercise-target").textContent = ex.sets;
+
+  const setsBlock = document.getElementById("session-sets-block");
+  const setsWrap = document.getElementById("session-sets-list");
+
+  if (ex.setLogs) {
+    const prev = lastWeightFor(ex.name);
+    setsBlock.hidden = false;
+    setsWrap.innerHTML = ex.setLogs.map((s, i) => `
+      <div class="session-set-row">
+        <span class="session-set-num">${i + 1}</span>
+        <input type="number" inputmode="decimal" step="0.5" class="weight-input session-set-weight" data-set="${i}"
+               placeholder="${prev !== null ? prev : "вес"}" value="${s.weight ?? ""}" />
+        <span class="weight-unit">кг</span>
+        <input type="number" inputmode="numeric" class="weight-input session-set-reps" data-set="${i}"
+               placeholder="${ex.targetSets.reps}" value="${s.reps ?? ""}" />
+        <span class="weight-unit">повт.</span>
+      </div>
+    `).join("");
+    setsWrap.querySelectorAll(".session-set-weight").forEach(inp => {
+      inp.addEventListener("input", () => {
+        ex.setLogs[Number(inp.dataset.set)].weight = inp.value ? Number(inp.value) : null;
+      });
+    });
+    setsWrap.querySelectorAll(".session-set-reps").forEach(inp => {
+      inp.addEventListener("input", () => {
+        ex.setLogs[Number(inp.dataset.set)].reps = inp.value ? Number(inp.value) : null;
+      });
+    });
+  } else {
+    setsBlock.hidden = true;
+    setsWrap.innerHTML = "";
+  }
+
+  const rpeScale = document.getElementById("session-rpe-scale");
+  rpeScale.innerHTML = "";
+  for (let i = 1; i <= 10; i++) {
+    const cell = document.createElement("span");
+    cell.dataset.value = i;
+    if (ex.rpe && i <= ex.rpe) cell.classList.add("selected");
+    rpeScale.appendChild(cell);
+  }
+  rpeScale.querySelectorAll("span").forEach(cell => {
+    cell.addEventListener("click", () => {
+      ex.rpe = Number(cell.dataset.value);
+      rpeScale.querySelectorAll("span").forEach(c => c.classList.toggle("selected", Number(c.dataset.value) <= ex.rpe));
+    });
+  });
+
+  document.getElementById("session-comment").value = ex.comment || "";
+  document.getElementById("session-next-btn").textContent =
+    SESSION.index === total - 1 ? "Завершить тренировку →" : "Готово →";
+}
+
+document.getElementById("session-comment").addEventListener("input", e => {
+  if (SESSION) SESSION.exercises[SESSION.index].comment = e.target.value;
+});
+
+document.getElementById("start-workout-btn").addEventListener("click", startWorkoutSession);
+
+document.getElementById("session-next-btn").addEventListener("click", () => {
+  if (SESSION.index < SESSION.exercises.length - 1) {
+    SESSION.index++;
+    renderSessionExercise();
+  } else {
+    finishWorkoutSession();
+  }
+});
+
+document.getElementById("session-close").addEventListener("click", () => {
+  SESSION = null;
+  showScreen("workouts");
+});
+
+function finishWorkoutSession() {
+  const durationMin = Math.max(1, Math.round((Date.now() - SESSION.startedAt) / 60000));
+  let totalSets = 0;
+
+  const payloadExercises = SESSION.exercises.map(ex => {
+    let weight = null;
+    if (ex.setLogs) {
+      const weights = ex.setLogs.map(s => s.weight).filter(w => w != null);
+      totalSets += ex.setLogs.filter(s => s.weight != null || s.reps != null).length;
+      weight = weights.length ? Math.max(...weights) : null;
+    }
+
+    const liveEx = PROGRAM[currentWorkoutDay].exercises.find(e => e.name === ex.name);
+    if (liveEx) {
+      liveEx.weight = weight;
+      liveEx.done = true;
+    }
+
+    return {
+      name: ex.name,
+      weight,
+      done: true,
+      sets: ex.setLogs ? ex.setLogs.map(s => ({ weight: s.weight, reps: s.reps })) : null,
+      rpe: ex.rpe,
+      comment: ex.comment || null,
+    };
+  });
+
+  postJSON("/api/workout-log", { exercises: payloadExercises });
+
+  document.getElementById("complete-duration").textContent = durationMin;
+  document.getElementById("complete-exercises").textContent = SESSION.exercises.length;
+  document.getElementById("complete-sets").textContent = totalSets;
+
+  showScreen("session-complete");
+}
+
+document.getElementById("complete-finish-btn").addEventListener("click", () => {
+  SESSION = null;
+  renderExercises(PROGRAM[currentWorkoutDay].exercises);
+  showScreen("home");
+});
+
 function renderExercises(exercises) {
   const list = document.getElementById("exercise-list");
 
