@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Мой тренер</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== HOME ===== -->
+  <section class="screen" id="screen-home" data-screen>
+    <div class="hero">
+      <div class="hero-photo"></div>
+      <img class="hero-img" src="assets/hero.jpg" alt=""
+           onerror="this.remove()" />
+      <div class="hero-overlay"></div>
+      <div class="hero-text">
+        <div class="hero-greeting">ПРИВЕТ, ДАРЬЯ!</div>
+        <div class="hero-sub">Сегодня твой день</div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-value">12</div>
+        <div class="stat-label">дней подряд</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">3/4</div>
+        <div class="stat-label">тренировки</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">1450</div>
+        <div class="stat-label">ккал</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" data-nav="workouts">Перейти к тренировке →</button>
+
+    <div class="list-card" data-nav="nutrition">
+      <div class="list-card-icon">🍽</div>
+      <div class="list-card-body">
+        <div class="list-card-title">Дневник питания</div>
+        <div class="list-card-sub">Заполни за сегодня</div>
+      </div>
+      <div class="list-card-plus">+</div>
+    </div>
+
+    <div class="list-card" id="checkin-banner" data-nav="checkin">
+      <div class="list-card-icon">📋</div>
+      <div class="list-card-body">
+        <div class="list-card-title">Еженедельный чек-ин</div>
+        <div class="list-card-sub">Пройди за 1 минуту</div>
+      </div>
+      <div class="list-card-arrow">→</div>
+    </div>
+  </section>
+
+  <!-- ===== WORKOUTS ===== -->
+  <section class="screen" id="screen-workouts" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="home">←</button>
+      <div class="topbar-title">Тренировка</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="day-pills">
+      <span>Пн</span><span>Вт</span><span class="active">Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+    </div>
+
+    <div class="workout-head">
+      <div class="workout-title">ВЕРХ ТЕЛА</div>
+      <div class="workout-meta">⏱ 40 мин &nbsp;·&nbsp; 🔥 8 упражнений</div>
+    </div>
+
+    <button class="btn-primary">Начать</button>
+
+    <div class="section-label">Упражнения</div>
+    <div class="exercise-list" id="exercise-list"></div>
+  </section>
+
+  <!-- ===== NUTRITION ===== -->
+  <section class="screen" id="screen-nutrition" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="home">←</button>
+      <div class="topbar-title">Питание</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="segmented" id="nutrition-segmented">
+      <span class="active" data-view="day">Сегодня</span><span data-view="week">Неделя</span>
+    </div>
+
+    <div data-view-content="day" id="nutrition-day">
+      <div class="calorie-ring-wrap">
+        <div class="calorie-ring">
+          <div class="calorie-value">1450</div>
+          <div class="calorie-goal">из 1800 ккал</div>
+        </div>
+        <div class="macro-list">
+          <div class="macro-row"><span class="macro-dot macro-b"></span>Б <b>120 г</b></div>
+          <div class="macro-row"><span class="macro-dot macro-f"></span>Ж <b>45 г</b></div>
+          <div class="macro-row"><span class="macro-dot macro-c"></span>У <b>160 г</b></div>
+        </div>
+      </div>
+
+      <div class="section-label">Приёмы пищи</div>
+      <div class="meal-grid">
+        <div class="meal-card"><div class="meal-name">Завтрак</div><div class="meal-kcal">320 ккал</div></div>
+        <div class="meal-card"><div class="meal-name">Обед</div><div class="meal-kcal">450 ккал</div></div>
+        <div class="meal-card"><div class="meal-name">Ужин</div><div class="meal-kcal">380 ккал</div></div>
+        <div class="meal-card"><div class="meal-name">Перекус</div><div class="meal-kcal">300 ккал</div></div>
+      </div>
+
+      <button class="btn-outline" id="add-meal-btn">+ Добавить приём пищи</button>
+      <div class="hint-text">Пришли скрин из FatSecret или впиши итог за день — тренер увидит в твоей карточке.</div>
+    </div>
+
+    <div data-view-content="week" id="nutrition-week" hidden>
+      <div class="section-label">Дни недели</div>
+      <div id="week-day-list" class="week-day-list"></div>
+
+      <div class="section-label">Среднее за неделю vs норма</div>
+      <div id="week-summary" class="week-summary"></div>
+
+      <div id="week-verdict" class="banner-card"></div>
+      <div class="hint-text">Считается по дням, где есть данные (скрин/текст из FatSecret). Дни без записи в среднее не входят.</div>
+    </div>
+  </section>
+
+  <!-- ===== PROGRESS ===== -->
+  <section class="screen" id="screen-progress" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="home">←</button>
+      <div class="topbar-title">ТВОЙ ПРОГРЕСС</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="progress-sub">Результаты, которыми можно гордиться</div>
+
+    <div class="segmented">
+      <span class="active">Вес</span><span>Замеры</span><span>Фото</span>
+    </div>
+
+    <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none">
+      <polyline fill="none" stroke="var(--accent)" stroke-width="3"
+        points="0,30 45,40 90,55 135,50 180,70 225,80 270,95 320,100" />
+      <circle cx="320" cy="100" r="5" fill="var(--accent)" />
+    </svg>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-value-sm">67,0 кг</div>
+        <div class="stat-label">начальный</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value-sm accent">60,2 кг</div>
+        <div class="stat-label">текущий</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value-sm">57,0 кг</div>
+        <div class="stat-label">цель</div>
+      </div>
+    </div>
+
+    <div class="banner-card">− 6,8 кг за 3 месяца</div>
+    <button class="btn-outline" data-nav="measurements-form">+ Внести замеры (раз в 2 недели)</button>
+  </section>
+
+  <!-- ===== CHECK-IN ===== -->
+  <section class="screen" id="screen-checkin" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="home">←</button>
+      <div class="topbar-title">Чек-ин</div>
+      <div class="topbar-spacer"></div>
+    </div>
+    <div class="progress-sub">Как ты себя чувствуешь на этой неделе?</div>
+
+    <div class="checkin-field">
+      <div class="checkin-label">🌙 Сон</div>
+      <div class="scale-10" data-scale></div>
+    </div>
+    <div class="checkin-field">
+      <div class="checkin-label">😣 Стресс</div>
+      <div class="scale-10" data-scale></div>
+    </div>
+    <div class="checkin-field">
+      <div class="checkin-label">💚 Самочувствие</div>
+      <div class="scale-10" data-scale></div>
+    </div>
+    <div class="checkin-field">
+      <div class="checkin-label">📌 Соблюдение плана</div>
+      <div class="scale-10" data-scale></div>
+    </div>
+
+    <button class="btn-primary" id="submit-checkin">Отправить</button>
+  </section>
+
+  <!-- ===== PROFILE ===== -->
+  <section class="screen" id="screen-profile" data-screen hidden>
+    <div class="topbar">
+      <button class="back-btn" data-nav="home">←</button>
+      <div class="topbar-title">Профиль</div>
+      <div class="topbar-spacer"></div>
+    </div>
+
+    <div class="profile-head">
+      <div class="avatar">Д</div>
+      <div>
+        <div class="profile-name">Дарья</div>
+        <div class="profile-sub">Клиент с 12.04.2024</div>
+      </div>
+    </div>
+
+    <div class="menu-list">
+      <div class="menu-item">📝 Моя анкета</div>
+      <div class="menu-item" data-nav="progress">📏 Мои замеры</div>
+      <div class="menu-item">📷 Мои фото</div>
+      <div class="menu-item">🎯 Мои цели</div>
+      <div class="menu-item health">⚠️ Здоровье и ограничения</div>
+      <div class="menu-item" data-nav="checkin">📋 Чек-ины</div>
+      <div class="menu-item">⚙️ Настройки</div>
+      <div class="menu-item">💬 Написать тренеру</div>
+    </div>
+  </section>
+
+</div>
+
+<nav class="tabbar">
+  <button class="tab" data-nav="home" data-tab>
+    <span class="tab-icon">🏠</span><span>Главная</span>
+  </button>
+  <button class="tab" data-nav="workouts" data-tab>
+    <span class="tab-icon">🏋</span><span>Тренировки</span>
+  </button>
+  <button class="tab" data-nav="nutrition" data-tab>
+    <span class="tab-icon">🍽</span><span>Питание</span>
+  </button>
+  <button class="tab" data-nav="progress" data-tab>
+    <span class="tab-icon">📊</span><span>Прогресс</span>
+  </button>
+  <button class="tab" data-nav="profile" data-tab>
+    <span class="tab-icon">👤</span><span>Профиль</span>
+  </button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
