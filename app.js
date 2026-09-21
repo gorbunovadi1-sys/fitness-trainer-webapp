@@ -307,6 +307,8 @@ let TARIFF_CONTACTED = false;
 let SUBSCRIPTION_UNTIL = null;
 let WORKOUT_DATES = [];
 let CHECKINS = [];
+let CARDIO_LOG = {};
+try { CARDIO_LOG = JSON.parse(localStorage.getItem("cardio_log") || "{}"); } catch (e) { CARDIO_LOG = {}; }
 let PROGRAM_STARTED_AT = null;
 let TRAINER_ACTION_PENDING = null;
 
@@ -686,14 +688,15 @@ function renderExercises(exercises) {
   const list = document.getElementById("exercise-list");
 
   if (!exercises.length) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const cardioDoneToday = WORKOUT_DATES.some(ts => dateKey(ts) === todayStr);
+    const dateStr = dateForWorkoutDay(currentWorkoutDay);
+    const cardioDone = WORKOUT_DATES.some(ts => dateKey(ts) === dateStr);
+    const cachedCardio = CARDIO_LOG[dateStr];
 
-    if (cardioDoneToday) {
+    if (cardioDone) {
       list.innerHTML = `
         <div class="rest-day-card">
-          <div class="rest-day-title">ВЫХОДНОЙ 😴</div>
-          <div class="hint-text" style="margin: 12px 0 0;">Кардио на сегодня уже записано 🔥 Отдыхай дальше.</div>
+          <div class="rest-day-title">🔥 КАРДИО${cachedCardio ? `: ${cachedCardio.name.toUpperCase()}` : ""}</div>
+          <div class="hint-text" style="margin: 12px 0 0;">${cachedCardio && cachedCardio.duration ? `${cachedCardio.duration} — ` : ""}уже записано. Отдыхай дальше 😴</div>
         </div>
       `;
       return;
@@ -723,10 +726,12 @@ function renderExercises(exercises) {
         exercises: [{ name, comment: duration, done: true }],
       });
       WORKOUT_DATES.push(new Date().toISOString());
+      CARDIO_LOG[dateStr] = { name, duration };
+      try { localStorage.setItem("cardio_log", JSON.stringify(CARDIO_LOG)); } catch (e) {}
       renderWeekProgram();
       renderTodayCard();
       renderAchievements();
-      list.innerHTML = `<div class="hint-text" style="margin: 24px 0;">Кардио «${name}» записано 🔥</div>`;
+      selectWorkoutDay(currentWorkoutDay);
     });
     return;
   }
@@ -778,13 +783,29 @@ function renderWorkoutDayPills() {
   });
 }
 
+function dateForWorkoutDay(day) {
+  return currentWeekDates()[DAYS.indexOf(day)];
+}
+
 function selectWorkoutDay(day) {
   currentWorkoutDay = day;
   const info = PROGRAM[day];
-  document.getElementById("workout-day-title").textContent = info.title;
-  document.getElementById("workout-day-meta").textContent = info.exercises.length
-    ? `⏱ ${info.duration} · 🔥 ${info.exercises.length} упражнений`
-    : "😴 День отдыха";
+  const dateStr = dateForWorkoutDay(day);
+  const cardio = !info.exercises.length && WORKOUT_DATES.some(ts => dateKey(ts) === dateStr) ? CARDIO_LOG[dateStr] : null;
+
+  if (cardio) {
+    document.getElementById("workout-day-title").textContent = "КАРДИО";
+    document.getElementById("workout-day-meta").textContent = `🔥 ${cardio.name}${cardio.duration ? ` · ⏱ ${cardio.duration}` : ""}`;
+  } else if (!info.exercises.length && WORKOUT_DATES.some(ts => dateKey(ts) === dateStr)) {
+    document.getElementById("workout-day-title").textContent = "КАРДИО";
+    document.getElementById("workout-day-meta").textContent = "🔥 Уже выполнено";
+  } else {
+    document.getElementById("workout-day-title").textContent = info.title;
+    document.getElementById("workout-day-meta").textContent = info.exercises.length
+      ? `⏱ ${info.duration} · 🔥 ${info.exercises.length} упражнений`
+      : "😴 День отдыха";
+  }
+
   renderWorkoutDayPills();
   renderExercises(info.exercises);
 }
