@@ -319,6 +319,15 @@ async function loadRealData() {
     });
     if (!res.ok) return;
     const data = await res.json();
+    if (data.name) {
+      // Реальное имя из бэкенда — источник истины. Telegram.WebApp даёт имя мгновенно
+      // (до этого fetch), но по ссылке без Telegram его вообще нет, поэтому обновляем
+      // здесь всегда, когда бэкенд что-то прислал.
+      CLIENT_NAME = data.name;
+      document.getElementById("home-greeting").textContent = `ПРИВЕТ, ${CLIENT_NAME.toUpperCase()}!`;
+      document.getElementById("profile-name").textContent = CLIENT_NAME;
+      document.getElementById("profile-avatar").textContent = CLIENT_NAME.charAt(0).toUpperCase();
+    }
     PROGRAM = normalizeProgram(data.program);
     NUTRITION_TARGET = data.nutrition_target;
     if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
