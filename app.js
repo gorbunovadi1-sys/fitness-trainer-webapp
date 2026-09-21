@@ -125,13 +125,14 @@ function getInitData() {
     }
   } catch (e) {}
 
-  // Постоянная ссылка без Telegram: ?token=... в адресе — один раз сохраняем и убираем из URL.
+  // Постоянная ссылка без Telegram: ?token=... в адресе. Не убираем его из URL — если
+  // добавить страницу на экран домой, iOS запомнит именно текущий адрес, и без токена
+  // в самой ссылке значок на главном экране открывал бы пустой экран (изолированное
+  // хранилище standalone-режима не всегда видит localStorage обычного Safari).
   try {
     const urlToken = new URLSearchParams(window.location.search).get("token");
     if (urlToken) {
       localStorage.setItem("access_token", urlToken);
-      const cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState(null, "", cleanUrl);
       return urlToken;
     }
     return localStorage.getItem("access_token") || "";
