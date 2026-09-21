@@ -686,6 +686,19 @@ function renderExercises(exercises) {
   const list = document.getElementById("exercise-list");
 
   if (!exercises.length) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const cardioDoneToday = WORKOUT_DATES.some(ts => dateKey(ts) === todayStr);
+
+    if (cardioDoneToday) {
+      list.innerHTML = `
+        <div class="rest-day-card">
+          <div class="rest-day-title">ВЫХОДНОЙ 😴</div>
+          <div class="hint-text" style="margin: 12px 0 0;">Кардио на сегодня уже записано 🔥 Отдыхай дальше.</div>
+        </div>
+      `;
+      return;
+    }
+
     list.innerHTML = `
       <div class="rest-day-card">
         <div class="rest-day-title">ВЫХОДНОЙ 😴</div>
@@ -709,6 +722,10 @@ function renderExercises(exercises) {
       postJSON("/api/workout-log", {
         exercises: [{ name, comment: duration, done: true }],
       });
+      WORKOUT_DATES.push(new Date().toISOString());
+      renderWeekProgram();
+      renderTodayCard();
+      renderAchievements();
       list.innerHTML = `<div class="hint-text" style="margin: 24px 0;">Кардио «${name}» записано 🔥</div>`;
     });
     return;
@@ -796,6 +813,7 @@ function renderWeekProgram() {
     const info = PROGRAM[d];
     const isRest = info.exercises.length === 0;
     const isDone = !isRest && loggedDates.has(weekDates[i]);
+    const cardioLogged = isRest && loggedDates.has(weekDates[i]);
     if (!isRest) {
       totalScheduled++;
       if (isDone) doneCount++;
@@ -806,6 +824,7 @@ function renderWeekProgram() {
           <span class="week-program-day-name${d === currentWorkoutDay ? " is-today" : ""}">${d}</span>
           <span class="week-program-day-title">${info.title}</span>
           ${!isRest ? `<span class="week-program-day-check${isDone ? " done" : ""}">${isDone ? "✓" : "○"}</span>` : ""}
+          ${cardioLogged ? `<span class="week-program-day-check done">🔥</span>` : ""}
         </div>
         ${isRest ? "" : `<div class="week-program-exercises">${info.exercises.map(e => `
           <div class="week-program-ex-row"><span>${e.name}</span><span>${e.sets}</span></div>
