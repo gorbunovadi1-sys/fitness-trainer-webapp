@@ -120,7 +120,21 @@ const API_BASE = "https://fitness-trainer-bot-production-b12c.up.railway.app";
 
 function getInitData() {
   try {
-    return (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) || "";
+    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initData) {
+      return Telegram.WebApp.initData;
+    }
+  } catch (e) {}
+
+  // Постоянная ссылка без Telegram: ?token=... в адресе — один раз сохраняем и убираем из URL.
+  try {
+    const urlToken = new URLSearchParams(window.location.search).get("token");
+    if (urlToken) {
+      localStorage.setItem("access_token", urlToken);
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, "", cleanUrl);
+      return urlToken;
+    }
+    return localStorage.getItem("access_token") || "";
   } catch (e) {
     return "";
   }
