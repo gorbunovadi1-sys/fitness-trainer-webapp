@@ -1625,7 +1625,11 @@ function renderNutritionToday() {
   document.getElementById("nutrition-today-fat").textContent = `${Math.round(sums.fat)} г`;
   document.getElementById("nutrition-today-carbs").textContent = `${Math.round(sums.carbs)} г`;
   const pct = NUTRITION_TARGET.kcal ? Math.min(100, Math.round((sums.kcal / NUTRITION_TARGET.kcal) * 100)) : 0;
-  document.querySelector(".calorie-ring").style.setProperty("--pct", pct);
+  const kcalDiff = sums.kcal - NUTRITION_TARGET.kcal;
+  const ringColor = kcalDiff > 50 ? "var(--danger)" : kcalDiff < -50 ? "var(--warning)" : "var(--accent)";
+  const ring = document.querySelector(".calorie-ring");
+  ring.style.setProperty("--pct", pct);
+  ring.style.setProperty("--ring-color", ringColor);
   renderTodayCard();
 
   const listWrap = document.getElementById("nutrition-today-list");
