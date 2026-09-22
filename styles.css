@@ -953,6 +953,12 @@ html, body {
 }
 .measurement-row b { color: var(--text); }
 .measurement-row:last-child { border-bottom: none; }
+.measurement-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.icon-btn {
+  background: none; border: none; color: var(--text-dim);
+  font-size: 15px; line-height: 1; padding: 4px 6px; cursor: pointer; border-radius: 6px;
+}
+.icon-btn:hover { color: var(--text); background: var(--bg-card-2); }
 
 /* ---------- Анкета ---------- */
 .anketa-progress-bar {

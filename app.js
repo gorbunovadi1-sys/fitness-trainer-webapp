@@ -1152,24 +1152,59 @@ function renderWeightTab() {
   }
 }
 
+const MEASUREMENT_FIELDS = [
+  ["weight", "Вес", "кг"], ["waist", "Талия", "см"], ["hips", "Бёдра", "см"],
+  ["chest", "Грудь", "см"], ["arms", "Руки", "см"], ["thighs", "Бедро", "см"],
+];
+let editingMeasurementId = null;
+
 function renderMeasurementsHistory() {
   const wrap = document.getElementById("measurements-history");
   if (!MEASUREMENTS.length) {
     wrap.textContent = "Записей пока нет.";
     return;
   }
-  const fields = [
-    ["weight", "Вес", "кг"], ["waist", "Талия", "см"], ["hips", "Бёдра", "см"],
-    ["chest", "Грудь", "см"], ["arms", "Руки", "см"], ["thighs", "Бедро", "см"],
-  ];
   wrap.innerHTML = MEASUREMENTS.slice().reverse().map(m => {
     const date = new Date(m.ts).toLocaleDateString("ru-RU");
-    const values = fields
+    const values = MEASUREMENT_FIELDS
       .filter(([key]) => m[key] != null)
       .map(([key, label, unit]) => `${label}: <b>${m[key]} ${unit}</b>`)
       .join(" · ");
-    return `<div class="measurement-row"><span>${date}</span><span>${values}</span></div>`;
+    return `<div class="measurement-row">
+      <span>${date}</span><span>${values}</span>
+      <span class="measurement-row-actions">
+        <button class="icon-btn" data-edit-measurement="${m.id}" title="Изменить">✎</button>
+        <button class="icon-btn" data-delete-measurement="${m.id}" title="Удалить">✕</button>
+      </span>
+    </div>`;
   }).join("");
+
+  wrap.querySelectorAll("[data-edit-measurement]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const m = MEASUREMENTS.find(x => x.id === Number(btn.dataset.editMeasurement));
+      if (!m) return;
+      editingMeasurementId = m.id;
+      document.getElementById("m-date").value = dateKey(m.ts);
+      MEASUREMENT_FIELDS.forEach(([key]) => (document.getElementById(`m-${key}`).value = m[key] ?? ""));
+      document.getElementById("submit-measurement").textContent = "Сохранить изменения";
+      document.getElementById("cancel-edit-measurement").hidden = false;
+      document.getElementById("progress-measurements").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  wrap.querySelectorAll("[data-delete-measurement]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Удалить эту запись замера?")) return;
+      const id = Number(btn.dataset.deleteMeasurement);
+      try {
+        await fetch(`${API_BASE}/api/measurement/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
+      } catch (e) {}
+      MEASUREMENTS = MEASUREMENTS.filter(m => m.id !== id);
+      renderMeasurementsHistory();
+      renderWeightTab();
+      renderResultHero();
+      renderAchievements();
+    });
+  });
 }
 
 // ---------- Фото-прогресс ----------
@@ -1190,7 +1225,7 @@ function groupPhotosByDate(photos) {
 }
 
 function renderPhotos() {
-  const groups = groupPhotosByDate(PHOTOS);
+  const groups = groupPhotosByDate(PHOTOS.filter(p => p.angle === "front" || p.angle === "side" || p.angle === "back"));
   const historyWrap = document.getElementById("photo-history");
   const compareWrap = document.getElementById("photo-compare");
 
@@ -1292,6 +1327,16 @@ function insertSortedByTs(array, entry) {
   el.value = todayInputValue();
 });
 
+function resetMeasurementForm() {
+  editingMeasurementId = null;
+  document.getElementById("submit-measurement").textContent = "Сохранить замер";
+  document.getElementById("cancel-edit-measurement").hidden = true;
+  ["weight", "waist", "hips", "chest", "arms", "thighs"].forEach(f => (document.getElementById(`m-${f}`).value = ""));
+  document.getElementById("m-date").value = todayInputValue();
+}
+
+document.getElementById("cancel-edit-measurement").addEventListener("click", resetMeasurementForm);
+
 document.getElementById("submit-measurement").addEventListener("click", async () => {
   const fields = ["weight", "waist", "hips", "chest", "arms", "thighs"];
   const payload = {};
@@ -1305,12 +1350,32 @@ document.getElementById("submit-measurement").addEventListener("click", async ()
   const dateVal = document.getElementById("m-date").value || todayInputValue();
   const ts = dateInputToIso(dateVal);
   payload.ts = ts;
-  await postJSON("/api/measurement", payload);
-  delete payload.ts;
-  insertSortedByTs(MEASUREMENTS, { ts, ...payload });
 
-  fields.forEach(f => (document.getElementById(`m-${f}`).value = ""));
-  document.getElementById("m-date").value = todayInputValue();
+  if (editingMeasurementId) {
+    const id = editingMeasurementId;
+    try {
+      await fetch(`${API_BASE}/api/measurement/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData: getInitData(), ...payload }),
+      });
+    } catch (e) {}
+    delete payload.ts;
+    MEASUREMENTS = MEASUREMENTS.filter(m => m.id !== id);
+    insertSortedByTs(MEASUREMENTS, { id, ts, ...payload });
+  } else {
+    const res = await fetch(`${API_BASE}/api/measurement`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData: getInitData(), ...payload }),
+    });
+    let newId = null;
+    try { newId = (await res.json()).id; } catch (e) {}
+    delete payload.ts;
+    insertSortedByTs(MEASUREMENTS, { id: newId, ts, ...payload });
+  }
+
+  resetMeasurementForm();
   renderWeightTab();
   renderMeasurementsHistory();
   renderResultHero();
