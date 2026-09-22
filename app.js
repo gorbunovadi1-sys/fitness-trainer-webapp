@@ -338,7 +338,7 @@ async function loadRealData() {
     }
     PROGRAM = normalizeProgram(data.program);
     NUTRITION_TARGET = data.nutrition_target;
-    if (Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
+    if (data.exercise_history && Object.keys(data.exercise_history).length) EXERCISE_HISTORY = data.exercise_history;
     MEASUREMENTS = data.measurements || [];
     ANKETA = data.anketa || {};
     PHOTOS = data.photos || [];
@@ -421,6 +421,19 @@ function escapeAttr(str) {
   return String(str).replace(/"/g, "&quot;");
 }
 
+function escapeHtml(str) {
+  return String(str ?? "").replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[ch]));
+}
+
+// "Сегодня" в календарной дате устройства клиента (не UTC) — new Date().toISOString()
+// сдвигает дату назад на ночные 2-3 часа в МСК (UTC+3), из-за чего "сегодня" по факту
+// показывало вчера, пока полночь ещё не наступила по UTC.
+function localDateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function renderAnketa() {
   const wrap = document.getElementById("anketa-sections");
 
@@ -440,7 +453,7 @@ function renderAnketa() {
             <div class="anketa-field">
               <label>${f.label}</label>
               ${f.type === "textarea"
-                ? `<textarea data-field="${f.key}">${data[f.key] || ""}</textarea>`
+                ? `<textarea data-field="${f.key}">${escapeHtml(data[f.key] || "")}</textarea>`
                 : `<input type="text" data-field="${f.key}" value="${escapeAttr(data[f.key] || "")}" />`}
             </div>
           `).join("")}
@@ -461,7 +474,7 @@ function renderAnketa() {
   });
 
   wrap.querySelectorAll("[data-save-section]").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const sectionKey = btn.dataset.saveSection;
       const sectionEl = btn.closest(".anketa-section");
       const sectionDef = ANKETA_SECTIONS.find(s => s.key === sectionKey);
@@ -469,8 +482,12 @@ function renderAnketa() {
       sectionEl.querySelectorAll("[data-field]").forEach(input => {
         values[input.dataset.field] = input.value;
       });
+      const ok = await postJSON("/api/anketa", { anketa: { [sectionKey]: values } });
+      if (!ok) {
+        btn.textContent = "Не сохранилось, попробуй ещё раз";
+        return;
+      }
       ANKETA[sectionKey] = values;
-      postJSON("/api/anketa", { anketa: { [sectionKey]: values } });
 
       const numEl = sectionEl.querySelector(".anketa-section-num");
       const filled = sectionDef.fields.some(f => (values[f.key] || "").trim() !== "");
@@ -633,7 +650,10 @@ document.getElementById("session-close").addEventListener("click", () => {
   showScreen("workouts");
 });
 
-function finishWorkoutSession() {
+let finishingWorkoutSession = false;
+
+async function finishWorkoutSession() {
+  if (finishingWorkoutSession) return;
   const durationMin = Math.max(1, Math.round((Date.now() - SESSION.startedAt) / 60000));
   let totalSets = 0;
 
@@ -643,12 +663,6 @@ function finishWorkoutSession() {
       const weights = ex.setLogs.map(s => s.weight).filter(w => w != null);
       totalSets += ex.setLogs.filter(s => s.weight != null || s.reps != null).length;
       weight = weights.length ? Math.max(...weights) : null;
-    }
-
-    const liveEx = PROGRAM[currentWorkoutDay].exercises.find(e => e.name === ex.name);
-    if (liveEx) {
-      liveEx.weight = weight;
-      liveEx.done = true;
     }
 
     return {
@@ -664,7 +678,22 @@ function finishWorkoutSession() {
   const selectedMoodBtn = document.querySelector("#complete-mood-row .mood-btn.selected");
   const mood = selectedMoodBtn ? selectedMoodBtn.dataset.mood : null;
   const overallRpe = document.querySelectorAll("#complete-rpe-scale span.selected").length || null;
-  postJSON("/api/workout-log", { exercises: payloadExercises, mood, overall_rpe: overallRpe });
+
+  finishingWorkoutSession = true;
+  const ok = await postJSON("/api/workout-log", { exercises: payloadExercises, mood, overall_rpe: overallRpe });
+  finishingWorkoutSession = false;
+  if (!ok) {
+    alert("Не удалось сохранить тренировку — проверь связь и попробуй ещё раз.");
+    return;
+  }
+
+  payloadExercises.forEach(pe => {
+    const liveEx = PROGRAM[currentWorkoutDay].exercises.find(e => e.name === pe.name);
+    if (liveEx) {
+      liveEx.weight = pe.weight;
+      liveEx.done = true;
+    }
+  });
   WORKOUT_DATES.push(new Date().toISOString());
 
   document.getElementById("complete-duration").textContent = durationMin;
@@ -724,13 +753,20 @@ function renderExercises(exercises) {
     document.getElementById("add-cardio-btn").addEventListener("click", () => {
       document.getElementById("cardio-form").hidden = false;
     });
-    document.getElementById("save-cardio-btn").addEventListener("click", () => {
+    document.getElementById("save-cardio-btn").addEventListener("click", async (e) => {
       const name = document.getElementById("cardio-name").value.trim();
       const duration = document.getElementById("cardio-duration").value.trim();
       if (!name) return;
-      postJSON("/api/workout-log", {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      const ok = await postJSON("/api/workout-log", {
         exercises: [{ name, comment: duration, done: true }],
       });
+      btn.disabled = false;
+      if (!ok) {
+        alert("Не удалось сохранить — попробуй ещё раз.");
+        return;
+      }
       WORKOUT_DATES.push(new Date().toISOString());
       CARDIO_LOG[dateStr] = { name, duration };
       try { localStorage.setItem("cardio_log", JSON.stringify(CARDIO_LOG)); } catch (e) {}
@@ -824,7 +860,7 @@ function currentWeekDates() {
   return DAYS.map((_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
-    return d.toISOString().slice(0, 10);
+    return localDateKey(d);
   });
 }
 
@@ -912,10 +948,10 @@ function computeStreakDays() {
   const activeDates = new Set([...WORKOUT_DATES.map(dateKey), ...NUTRITION_LOGS.map(n => dateKey(n.ts))]);
   let streak = 0;
   const cursor = new Date();
-  if (!activeDates.has(cursor.toISOString().slice(0, 10))) {
+  if (!activeDates.has(localDateKey(cursor))) {
     cursor.setDate(cursor.getDate() - 1);
   }
-  while (activeDates.has(cursor.toISOString().slice(0, 10))) {
+  while (activeDates.has(localDateKey(cursor))) {
     streak++;
     cursor.setDate(cursor.getDate() - 1);
   }
@@ -1314,7 +1350,7 @@ document.querySelectorAll(".photo-upload-slot input[type=\"file\"]").forEach(inp
       const res = await fetch(`${API_BASE}/api/photo`, { method: "POST", body: formData });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      PHOTOS.push(data.photo);
+      insertSortedByTs(PHOTOS, data.photo);
       renderPhotos();
       status.textContent = "Сохранено ✓";
     } catch (err) {
@@ -1336,7 +1372,7 @@ document.querySelectorAll("[data-goto-tab]").forEach(btn => {
 
 // ---------- Задним числом: даты по умолчанию — сегодня, не позже сегодня ----------
 function todayInputValue() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateKey(new Date());
 }
 function dateInputToIso(dateStr) {
   return `${dateStr}T12:00:00.000Z`;
@@ -1362,7 +1398,10 @@ function resetMeasurementForm() {
 
 document.getElementById("cancel-edit-measurement").addEventListener("click", resetMeasurementForm);
 
-document.getElementById("submit-measurement").addEventListener("click", async () => {
+let measurementSubmitting = false;
+
+document.getElementById("submit-measurement").addEventListener("click", async (e) => {
+  if (measurementSubmitting) return;
   const fields = ["weight", "waist", "hips", "chest", "arms", "thighs"];
   const payload = {};
   fields.forEach(f => {
@@ -1372,62 +1411,71 @@ document.getElementById("submit-measurement").addEventListener("click", async ()
 
   if (Object.values(payload).every(v => v === null)) return;
 
-  const dateVal = document.getElementById("m-date").value || todayInputValue();
-  const ts = dateInputToIso(dateVal);
-  payload.ts = ts;
+  const submitBtn = e.currentTarget;
+  measurementSubmitting = true;
+  submitBtn.disabled = true;
 
-  if (editingMeasurementId) {
-    const id = editingMeasurementId;
-    let res;
-    try {
-      res = await fetch(`${API_BASE}/api/measurement/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData: getInitData(), ...payload }),
-      });
-    } catch (e) {
-      alert("Не удалось сохранить изменения — проверь интернет-соединение и попробуй ещё раз.");
-      return;
+  try {
+    const dateVal = document.getElementById("m-date").value || todayInputValue();
+    const ts = dateInputToIso(dateVal);
+    payload.ts = ts;
+
+    if (editingMeasurementId) {
+      const id = editingMeasurementId;
+      let res;
+      try {
+        res = await fetch(`${API_BASE}/api/measurement/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData: getInitData(), ...payload }),
+        });
+      } catch (e) {
+        alert("Не удалось сохранить изменения — проверь интернет-соединение и попробуй ещё раз.");
+        return;
+      }
+      if (!res.ok) {
+        alert("Не удалось сохранить изменения — попробуй ещё раз.");
+        return;
+      }
+      delete payload.ts;
+      MEASUREMENTS = MEASUREMENTS.filter(m => m.id !== id);
+      insertSortedByTs(MEASUREMENTS, { id, ts, ...payload });
+    } else {
+      let res;
+      try {
+        res = await fetch(`${API_BASE}/api/measurement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData: getInitData(), ...payload }),
+        });
+      } catch (e) {
+        alert("Не удалось сохранить замер — проверь интернет-соединение и попробуй ещё раз.");
+        return;
+      }
+      if (!res.ok) {
+        alert("Не удалось сохранить замер — попробуй ещё раз.");
+        return;
+      }
+      let newId = null;
+      try { newId = (await res.json()).id; } catch (e) {}
+      delete payload.ts;
+      insertSortedByTs(MEASUREMENTS, { id: newId, ts, ...payload });
     }
-    if (!res.ok) {
-      alert("Не удалось сохранить изменения — попробуй ещё раз.");
-      return;
-    }
-    delete payload.ts;
-    MEASUREMENTS = MEASUREMENTS.filter(m => m.id !== id);
-    insertSortedByTs(MEASUREMENTS, { id, ts, ...payload });
-  } else {
-    let res;
-    try {
-      res = await fetch(`${API_BASE}/api/measurement`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ initData: getInitData(), ...payload }),
-      });
-    } catch (e) {
-      alert("Не удалось сохранить замер — проверь интернет-соединение и попробуй ещё раз.");
-      return;
-    }
-    if (!res.ok) {
-      alert("Не удалось сохранить замер — попробуй ещё раз.");
-      return;
-    }
-    let newId = null;
-    try { newId = (await res.json()).id; } catch (e) {}
-    delete payload.ts;
-    insertSortedByTs(MEASUREMENTS, { id: newId, ts, ...payload });
+
+    resetMeasurementForm();
+    renderWeightTab();
+    renderMeasurementsHistory();
+    renderResultHero();
+    renderAchievements();
+    renderGoalCard();
+
+    const badge = document.getElementById("measurement-saved");
+    badge.hidden = false;
+    setTimeout(() => (badge.hidden = true), 2000);
+  } finally {
+    measurementSubmitting = false;
+    submitBtn.disabled = false;
   }
-
-  resetMeasurementForm();
-  renderWeightTab();
-  renderMeasurementsHistory();
-  renderResultHero();
-  renderAchievements();
-  renderGoalCard();
-
-  const badge = document.getElementById("measurement-saved");
-  badge.hidden = false;
-  setTimeout(() => (badge.hidden = true), 2000);
 });
 
 function showScreen(name) {
@@ -1474,7 +1522,9 @@ document.querySelectorAll(".segmented").forEach(seg => {
 let NUTRITION_LOGS = [];
 
 function dateKey(ts) {
-  return ts.slice(0, 10);
+  // Локальный календарный день таймстампа с бэкенда (UTC), а не UTC-дата — иначе
+  // запись, сделанная поздно вечером по МСК, могла "уехать" на день вперёд.
+  return localDateKey(new Date(ts));
 }
 
 function nutritionLogsForDate(dateStr) {
@@ -1492,7 +1542,7 @@ function sumNutrition(logs) {
 }
 
 function todayDateStr() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateKey(new Date());
 }
 
 function renderNutritionToday() {
@@ -1538,7 +1588,7 @@ function last7Days() {
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    days.push(d.toISOString().slice(0, 10));
+    days.push(localDateKey(d));
   }
   return days;
 }
@@ -1731,7 +1781,13 @@ function renderTariffScreen() {
       const t = TARIFFS[Number(btn.dataset.pickTariff)];
       btn.disabled = true;
       btn.textContent = "Отправляю…";
-      await postJSON("/api/tariff-request", { id: t.id || "", name: t.name, price: t.price || "" });
+      const ok = await postJSON("/api/tariff-request", { id: t.id || "", name: t.name, price: t.price || "" });
+      if (!ok) {
+        btn.disabled = false;
+        btn.textContent = "Выбрать";
+        alert("Не удалось отправить заявку — попробуй ещё раз.");
+        return;
+      }
       REQUESTED_TARIFF = { id: t.id || "", name: t.name, price: t.price || "" };
       TARIFF_CONTACTED = false;
       renderTariffScreen();
@@ -1781,7 +1837,11 @@ document.querySelectorAll("#complete-mood-row .mood-btn").forEach(btn => {
   });
 });
 
-document.getElementById("submit-checkin").addEventListener("click", () => {
+let checkinSubmitting = false;
+
+document.getElementById("submit-checkin").addEventListener("click", async () => {
+  if (checkinSubmitting) return;
+  const submitBtn = document.getElementById("submit-checkin");
   const values = { sleep: 0, stress: 0, mood: 0, compliance: 0 };
   document.querySelectorAll(".checkin-field").forEach(field => {
     const label = field.querySelector(".checkin-label").textContent;
@@ -1792,7 +1852,15 @@ document.getElementById("submit-checkin").addEventListener("click", () => {
     else if (label.includes("плана")) values.compliance = selected;
   });
 
-  postJSON("/api/checkin", values);
+  checkinSubmitting = true;
+  submitBtn.disabled = true;
+  const ok = await postJSON("/api/checkin", values);
+  submitBtn.disabled = false;
+  checkinSubmitting = false;
+  if (!ok) {
+    alert("Не удалось сохранить чек-ин — попробуй ещё раз.");
+    return;
+  }
   CHECKINS.push({ ts: new Date().toISOString(), ...values });
   renderTodayCard();
   renderAchievements();
@@ -1806,7 +1874,11 @@ document.getElementById("submit-checkin").addEventListener("click", () => {
   showScreen("home");
 });
 
+let fatsecretImporting = false;
+
 document.getElementById("save-fatsecret-btn").addEventListener("click", async () => {
+  if (fatsecretImporting) return;
+  const btn = document.getElementById("save-fatsecret-btn");
   const input = document.getElementById("fatsecret-link-input");
   const url = input.value.trim();
   const status = document.getElementById("nutrition-upload-status");
@@ -1823,17 +1895,22 @@ document.getElementById("save-fatsecret-btn").addEventListener("click", async ()
   formData.append("initData", getInitData());
   formData.append("url", url);
 
+  fatsecretImporting = true;
+  btn.disabled = true;
   try {
     const res = await fetch(`${API_BASE}/api/nutrition-fatsecret-import`, { method: "POST", body: formData });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    NUTRITION_LOGS.push({ ts: data.ts, kcal: data.kcal, protein: data.protein, fat: data.fat, carbs: data.carbs, source: "fatsecret", url: data.url });
+    insertSortedByTs(NUTRITION_LOGS, { ts: data.ts, kcal: data.kcal, protein: data.protein, fat: data.fat, carbs: data.carbs, source: "fatsecret", url: data.url });
     input.value = "";
     renderNutritionToday();
     renderWeekNutrition();
     status.textContent = `Импортировано: ${data.kcal ?? 0} ккал · Б${data.protein ?? 0} Ж${data.fat ?? 0} У${data.carbs ?? 0}`;
   } catch (err) {
     status.textContent = "Не удалось импортировать — проверь ссылку и попробуй ещё раз";
+  } finally {
+    fatsecretImporting = false;
+    btn.disabled = false;
   }
 
   setTimeout(() => (status.hidden = true), 4000);
@@ -1849,17 +1926,24 @@ function renderAiChatLog() {
     return;
   }
   log.innerHTML = AI_CHAT_HISTORY.map(m =>
-    `<div class="ai-chat-msg ${m.role === "user" ? "ai-chat-msg-user" : "ai-chat-msg-ai"}">${m.content}</div>`
+    `<div class="ai-chat-msg ${m.role === "user" ? "ai-chat-msg-user" : "ai-chat-msg-ai"}">${escapeHtml(m.content)}</div>`
   ).join("");
   log.scrollTop = log.scrollHeight;
 }
 
+let aiChatSending = false;
+
 async function sendAiChatMessage() {
+  if (aiChatSending) return;
   const input = document.getElementById("ai-chat-input");
   const message = input.value.trim();
   if (!message) return;
 
   const status = document.getElementById("ai-chat-status");
+  const sendBtn = document.getElementById("ai-chat-send-btn");
+  aiChatSending = true;
+  input.disabled = true;
+  sendBtn.disabled = true;
   input.value = "";
   AI_CHAT_HISTORY.push({ role: "user", content: message });
   renderAiChatLog();
@@ -1879,6 +1963,11 @@ async function sendAiChatMessage() {
     status.hidden = true;
   } catch (err) {
     status.textContent = "Не получилось получить ответ — попробуй ещё раз чуть позже.";
+  } finally {
+    aiChatSending = false;
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
   }
 }
 
