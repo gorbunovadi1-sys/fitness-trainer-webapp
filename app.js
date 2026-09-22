@@ -318,6 +318,13 @@ try { CARDIO_LOG = JSON.parse(localStorage.getItem("cardio_log") || "{}"); } cat
 let PROGRAM_STARTED_AT = null;
 let TRAINER_ACTION_PENDING = null;
 
+function showAccessBlocked() {
+  document.querySelector(".app").hidden = true;
+  document.querySelector(".tabbar").hidden = true;
+  document.getElementById("subscription-gate-screen").hidden = false;
+}
+document.getElementById("subscription-gate-contact-btn").addEventListener("click", () => openTrainerChat("Миш, у меня закрылся доступ — хочу продлить"));
+
 async function loadRealData() {
   try {
     const res = await fetch(API_BASE + "/api/bootstrap", {
@@ -325,6 +332,14 @@ async function loadRealData() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initData: getInitData() }),
     });
+    if (res.status === 403) {
+      let detail = null;
+      try { detail = (await res.json()).detail; } catch (e) {}
+      if (detail === "access_expired") {
+        showAccessBlocked();
+        return;
+      }
+    }
     if (!res.ok) return;
     const data = await res.json();
     if (data.name) {
@@ -721,6 +736,7 @@ document.getElementById("nutrition-contact-trainer-btn").addEventListener("click
 
 function renderExercises(exercises) {
   const list = document.getElementById("exercise-list");
+  document.getElementById("start-workout-btn").textContent = "Начать";
 
   if (!exercises.length) {
     const dateStr = dateForWorkoutDay(currentWorkoutDay);
@@ -778,7 +794,27 @@ function renderExercises(exercises) {
     return;
   }
 
-  list.innerHTML = exercises.map((ex, i) => {
+  // Сама PROGRAM с бэкенда не хранит done/weight за сегодня (это план тренера, не лог) —
+  // после перезагрузки страницы эти поля всегда пустые. Восстанавливаем их из уже
+  // сохранённого лога тренировки, иначе список выглядит так, будто ничего не сделано,
+  // хотя тренировка на сегодня уже записана (WORKOUT_DATES её содержит).
+  const todayStr = dateForWorkoutDay(currentWorkoutDay);
+  const doneToday = WORKOUT_DATES.some(ts => dateKey(ts) === todayStr);
+  if (doneToday) {
+    exercises.forEach(ex => {
+      const hist = EXERCISE_HISTORY[ex.name];
+      const lastEntry = hist && hist.length ? hist[hist.length - 1] : null;
+      if (lastEntry && dateKey(lastEntry.date) === todayStr) {
+        ex.weight = lastEntry.weight;
+      }
+      ex.done = true;
+    });
+  }
+
+  const startBtn = document.getElementById("start-workout-btn");
+  startBtn.textContent = doneToday ? "Пройти ещё раз" : "Начать";
+
+  list.innerHTML = (doneToday ? `<div class="hint-text" style="margin:0 0 12px;">✅ Тренировка на сегодня уже выполнена.</div>` : "") + exercises.map((ex, i) => {
     const prev = lastWeightFor(ex.name);
     return `
     <div class="exercise-item">
@@ -1554,6 +1590,8 @@ function renderNutritionToday() {
   document.getElementById("nutrition-today-protein").textContent = `${Math.round(sums.protein)} г`;
   document.getElementById("nutrition-today-fat").textContent = `${Math.round(sums.fat)} г`;
   document.getElementById("nutrition-today-carbs").textContent = `${Math.round(sums.carbs)} г`;
+  const pct = NUTRITION_TARGET.kcal ? Math.min(100, Math.round((sums.kcal / NUTRITION_TARGET.kcal) * 100)) : 0;
+  document.querySelector(".calorie-ring").style.setProperty("--pct", pct);
   renderTodayCard();
 
   const listWrap = document.getElementById("nutrition-today-list");
@@ -1706,12 +1744,11 @@ function anketaFullyFilled() {
 function renderAnketaNudge() {
   const card = document.getElementById("anketa-nudge-card");
   const filled = anketaFullyFilled();
-  card.classList.toggle("completed", filled);
-  document.getElementById("anketa-nudge-label").textContent = filled ? "✅ АНКЕТА" : "📝 АНКЕТА";
-  document.getElementById("anketa-nudge-title").textContent = filled ? "Анкета заполнена" : "Заполни анкету";
-  document.getElementById("anketa-nudge-sub").textContent = filled
-    ? "Тренер видит все твои ответы"
-    : "Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут";
+  card.hidden = filled;
+  if (filled) return;
+  document.getElementById("anketa-nudge-label").textContent = "📝 АНКЕТА";
+  document.getElementById("anketa-nudge-title").textContent = "Заполни анкету";
+  document.getElementById("anketa-nudge-sub").textContent = "Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут";
 }
 
 function hasActiveSubscription() {
