@@ -1092,32 +1092,6 @@ function buildSparklinePoints(values, width = 320, height = 120, pad = 14) {
   });
 }
 
-function renderStrengthChart(name) {
-  const hist = EXERCISE_HISTORY[name] || [];
-  const values = hist.map(h => h.weight);
-  const svg = document.getElementById("strength-chart");
-
-  if (!values.length) {
-    svg.innerHTML = "";
-    ["strength-first", "strength-last", "strength-delta"].forEach(id => {
-      document.getElementById(id).textContent = "—";
-    });
-    return;
-  }
-
-  const points = buildSparklinePoints(values);
-  const last = points[points.length - 1].split(",");
-  svg.innerHTML = `
-    <polyline fill="none" stroke="var(--accent)" stroke-width="3" points="${points.join(" ")}" />
-    <circle cx="${last[0]}" cy="${last[1]}" r="5" fill="var(--accent)" />
-  `;
-
-  document.getElementById("strength-first").textContent = `${values[0]} кг`;
-  document.getElementById("strength-last").textContent = `${values[values.length - 1]} кг`;
-  const delta = Math.round((values[values.length - 1] - values[0]) * 10) / 10;
-  document.getElementById("strength-delta").textContent = `${delta >= 0 ? "+" : ""}${delta} кг`;
-}
-
 // ---------- Вес и замеры ----------
 function renderWeightTab() {
   const weights = MEASUREMENTS.filter(m => m.weight != null).map(m => m.weight);
@@ -1214,6 +1188,7 @@ function renderMeasurementsHistory() {
       renderWeightTab();
       renderResultHero();
       renderAchievements();
+      renderGoalCard();
     });
   });
 }
@@ -1408,25 +1383,12 @@ document.getElementById("submit-measurement").addEventListener("click", async ()
   renderMeasurementsHistory();
   renderResultHero();
   renderAchievements();
+  renderGoalCard();
 
   const badge = document.getElementById("measurement-saved");
   badge.hidden = false;
   setTimeout(() => (badge.hidden = true), 2000);
 });
-
-function renderStrengthPills() {
-  const wrap = document.getElementById("strength-exercise-pills");
-  const names = Object.keys(EXERCISE_HISTORY);
-  wrap.innerHTML = names.map((n, i) => `<span data-ex="${n}" class="${i === 0 ? "active" : ""}">${n}</span>`).join("");
-  wrap.querySelectorAll("[data-ex]").forEach(el => {
-    el.addEventListener("click", () => {
-      wrap.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-      el.classList.add("active");
-      renderStrengthChart(el.dataset.ex);
-    });
-  });
-  if (names.length) renderStrengthChart(names[0]);
-}
 
 function showScreen(name) {
   document.querySelectorAll("[data-screen]").forEach(s => {
@@ -1544,7 +1506,7 @@ function last7Days() {
 function renderWeekNutrition() {
   const dayStats = last7Days().map(dateStr => {
     const logs = nutritionLogsForDate(dateStr);
-    return logs.length ? { dateStr, sums: sumNutrition(logs) } : { dateStr, sums: null };
+    return logs.length ? { dateStr, sums: sumNutrition(logs), logs } : { dateStr, sums: null, logs: [] };
   });
   const daysWithData = dayStats.filter(d => d.sums);
   const maxKcal = Math.max(NUTRITION_TARGET.kcal * 1.3, ...daysWithData.map(d => d.sums.kcal), 1);
@@ -1561,11 +1523,19 @@ function renderWeekNutrition() {
     }
     const pct = Math.min(100, (d.sums.kcal / maxKcal) * 100);
     const over = d.sums.kcal > NUTRITION_TARGET.kcal * 1.1;
+    const fatsecretLog = d.logs.find(n => n.source === "fatsecret" && n.url);
+    const link = fatsecretLog ? ` · <a href="${fatsecretLog.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
     return `
-      <div class="week-day-row">
-        <div class="week-day-name">${label}</div>
-        <div class="week-day-bar-wrap"><div class="week-day-bar ${over ? "over" : "ok"}" style="width:${pct}%"></div></div>
-        <div class="week-day-kcal">${Math.round(d.sums.kcal)} ккал</div>
+      <div class="week-day-card">
+        <div class="week-day-row">
+          <div class="week-day-name">${label}</div>
+          <div class="week-day-bar-wrap"><div class="week-day-bar ${over ? "over" : "ok"}" style="width:${pct}%"></div></div>
+          <div class="week-day-kcal">${Math.round(d.sums.kcal)} ккал</div>
+        </div>
+        <div class="week-day-detail">
+          <span>Б${Math.round(d.sums.protein)} Ж${Math.round(d.sums.fat)} У${Math.round(d.sums.carbs)}</span>
+          <span>${link}</span>
+        </div>
       </div>`;
   }).join("");
 
@@ -1886,7 +1856,6 @@ renderAiChatLog();
 
   selectWorkoutDay(currentWorkoutDay);
   renderWeekProgram();
-  renderStrengthPills();
   renderWeekNutrition();
   renderWeightTab();
   renderMeasurementsHistory();

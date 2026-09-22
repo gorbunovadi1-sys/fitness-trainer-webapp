@@ -287,7 +287,7 @@
     </div>
 
     <div class="segmented" id="progress-segmented">
-      <span class="active" data-view="weight">Вес</span><span data-view="strength">Силовые</span><span data-view="measurements">Замеры</span><span data-view="photos">Фото</span>
+      <span class="active" data-view="weight">Вес</span><span data-view="measurements">Замеры</span><span data-view="photos">Фото</span>
     </div>
 
     <div data-view-content="weight" id="progress-weight">
@@ -310,28 +310,6 @@
 
       <div class="banner-card" id="weight-banner">Внеси первый замер, чтобы видеть динамику</div>
       <button class="btn-outline" data-goto-tab="measurements">+ Внести замеры (раз в 2 недели)</button>
-    </div>
-
-    <div data-view-content="strength" id="progress-strength" hidden>
-      <div class="exercise-pills" id="strength-exercise-pills"></div>
-
-      <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none" id="strength-chart"></svg>
-
-      <div class="stat-row">
-        <div class="stat-card">
-          <div class="stat-value-sm" id="strength-first">—</div>
-          <div class="stat-label">начало блока</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value-sm accent" id="strength-last">—</div>
-          <div class="stat-label">сейчас</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value-sm" id="strength-delta">—</div>
-          <div class="stat-label">прогресс</div>
-        </div>
-      </div>
-      <div class="hint-text">Вес фиксируется автоматически каждый раз, когда отмечаешь упражнение выполненным.</div>
     </div>
 
     <div data-view-content="measurements" id="progress-measurements" hidden>

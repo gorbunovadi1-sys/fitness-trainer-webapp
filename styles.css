@@ -467,32 +467,6 @@ html, body {
 .weight-unit { font-size: 11px; color: var(--text-dim); }
 .prev-weight-hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
 
-/* ---------- Exercise picker pills (Прогресс → Силовые) ---------- */
-.exercise-pills {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  margin-bottom: 16px;
-}
-.exercise-pills span {
-  flex-shrink: 0;
-  white-space: nowrap;
-  padding: 8px 14px;
-  border-radius: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  color: var(--text-dim);
-  cursor: pointer;
-}
-.exercise-pills span.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0d0d0d;
-  font-weight: 700;
-}
-
 /* ---------- Week program (Тренировки → Вся неделя) ---------- */
 .week-program-list { display: flex; flex-direction: column; gap: 10px; }
 .week-program-day {
@@ -696,6 +670,25 @@ html, body {
 .week-day-bar.over { background: var(--danger); }
 .week-day-kcal { font-size: 12px; color: var(--text-dim); width: 64px; text-align: right; }
 .week-day-kcal.missing { font-style: italic; opacity: 0.6; }
+.week-day-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.week-day-card .week-day-row { background: none; border: none; padding: 0; }
+.week-day-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.week-day-detail a { color: var(--accent); }
 
 .week-summary {
   background: var(--bg-card);
