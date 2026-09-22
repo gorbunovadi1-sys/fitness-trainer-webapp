@@ -1243,10 +1243,12 @@ document.querySelectorAll(".photo-upload-slot input[type=\"file\"]").forEach(inp
     status.hidden = false;
     status.textContent = "Загружаю…";
 
+    const dateVal = document.getElementById("photo-date").value || todayInputValue();
     const formData = new FormData();
     formData.append("initData", getInitData());
     formData.append("angle", input.dataset.angle);
     formData.append("file", file);
+    formData.append("ts", dateInputToIso(dateVal));
 
     try {
       const res = await fetch(`${API_BASE}/api/photo`, { method: "POST", body: formData });
@@ -1272,6 +1274,24 @@ document.querySelectorAll("[data-goto-tab]").forEach(btn => {
   });
 });
 
+// ---------- Задним числом: даты по умолчанию — сегодня, не позже сегодня ----------
+function todayInputValue() {
+  return new Date().toISOString().slice(0, 10);
+}
+function dateInputToIso(dateStr) {
+  return `${dateStr}T12:00:00.000Z`;
+}
+function insertSortedByTs(array, entry) {
+  let i = array.length;
+  while (i > 0 && array[i - 1].ts > entry.ts) i--;
+  array.splice(i, 0, entry);
+}
+["m-date", "photo-date"].forEach(id => {
+  const el = document.getElementById(id);
+  el.max = todayInputValue();
+  el.value = todayInputValue();
+});
+
 document.getElementById("submit-measurement").addEventListener("click", async () => {
   const fields = ["weight", "waist", "hips", "chest", "arms", "thighs"];
   const payload = {};
@@ -1282,10 +1302,15 @@ document.getElementById("submit-measurement").addEventListener("click", async ()
 
   if (Object.values(payload).every(v => v === null)) return;
 
+  const dateVal = document.getElementById("m-date").value || todayInputValue();
+  const ts = dateInputToIso(dateVal);
+  payload.ts = ts;
   await postJSON("/api/measurement", payload);
-  MEASUREMENTS.push({ ts: new Date().toISOString(), ...payload });
+  delete payload.ts;
+  insertSortedByTs(MEASUREMENTS, { ts, ...payload });
 
   fields.forEach(f => (document.getElementById(`m-${f}`).value = ""));
+  document.getElementById("m-date").value = todayInputValue();
   renderWeightTab();
   renderMeasurementsHistory();
   renderResultHero();
@@ -1386,26 +1411,17 @@ function renderNutritionToday() {
   document.getElementById("nutrition-today-carbs").textContent = `${Math.round(sums.carbs)} г`;
   renderTodayCard();
 
-  const photosToday = PHOTOS.filter(p => p.angle === "meal" && dateKey(p.ts) === todayStr);
-  const entries = [
-    ...logsToday.map(n => ({ type: "manual", ts: n.ts, data: n })),
-    ...photosToday.map(p => ({ type: "photo", ts: p.ts, data: p })),
-  ].sort((a, b) => a.ts.localeCompare(b.ts));
-
   const listWrap = document.getElementById("nutrition-today-list");
-  if (!entries.length) {
+  if (!logsToday.length) {
     listWrap.className = "hint-text";
     listWrap.textContent = "Пока пусто.";
     return;
   }
   listWrap.className = "";
-  listWrap.innerHTML = entries.map(e => {
-    const time = new Date(e.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-    if (e.type === "photo") {
-      return `<div class="nutrition-entry-row"><span>${time} · скрин</span><img src="${photoUrl(e.data)}" /></div>`;
-    }
-    const n = e.data;
-    return `<div class="nutrition-entry-row"><span>${time}</span><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}</span></div>`;
+  listWrap.innerHTML = logsToday.slice().sort((a, b) => a.ts.localeCompare(b.ts)).map(n => {
+    const time = new Date(n.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    const link = n.source === "fatsecret" && n.url ? ` · <a href="${n.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
+    return `<div class="nutrition-entry-row"><span>${time}</span><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}${link}</span></div>`;
   }).join("");
 }
 
@@ -1687,92 +1703,37 @@ document.getElementById("submit-checkin").addEventListener("click", () => {
   showScreen("home");
 });
 
-document.getElementById("add-meal-btn").addEventListener("click", () => {
-  const form = document.getElementById("meal-form");
-  form.hidden = !form.hidden;
-});
-
-document.getElementById("cancel-meal-btn").addEventListener("click", () => {
-  ["kcal", "protein", "fat", "carbs"].forEach(f => (document.getElementById(`meal-${f}`).value = ""));
-  document.getElementById("meal-form").hidden = true;
-  document.getElementById("nutrition-upload-status").hidden = true;
-});
-
-document.getElementById("save-meal-btn").addEventListener("click", async () => {
-  const fields = ["kcal", "protein", "fat", "carbs"];
-  const payload = {};
-  fields.forEach(f => {
-    const val = document.getElementById(`meal-${f}`).value;
-    payload[f] = val ? Number(val) : null;
-  });
-  if (Object.values(payload).every(v => v === null)) {
-    const status = document.getElementById("nutrition-upload-status");
-    status.hidden = false;
-    status.textContent = "Заполни хотя бы одно поле";
-    setTimeout(() => (status.hidden = true), 2000);
-    return;
-  }
-
-  await postJSON("/api/nutrition-log", payload);
-  NUTRITION_LOGS.push({ ts: new Date().toISOString(), ...payload });
-
-  fields.forEach(f => (document.getElementById(`meal-${f}`).value = ""));
-  document.getElementById("meal-form").hidden = true;
-  renderNutritionToday();
-  renderWeekNutrition();
-});
-
-document.getElementById("meal-photo-input").addEventListener("change", async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
+document.getElementById("save-fatsecret-btn").addEventListener("click", async () => {
+  const input = document.getElementById("fatsecret-link-input");
+  const url = input.value.trim();
   const status = document.getElementById("nutrition-upload-status");
   status.hidden = false;
-  status.textContent = "Загружаю…";
 
-  const formData = new FormData();
-  formData.append("initData", getInitData());
-  formData.append("angle", "meal");
-  formData.append("file", file);
-
-  try {
-    const res = await fetch(`${API_BASE}/api/photo`, { method: "POST", body: formData });
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    PHOTOS.push(data.photo);
-    renderNutritionToday();
-  } catch (err) {
-    status.textContent = "Ошибка загрузки — попробуй другое фото";
-    e.target.value = "";
-    setTimeout(() => (status.hidden = true), 2500);
+  if (!/^https:\/\/([a-z0-9-]+\.)*fatsecret\.com\//i.test(url)) {
+    status.textContent = "Похоже, это не ссылка на fatsecret.com — проверь и вставь заново";
+    setTimeout(() => (status.hidden = true), 3000);
     return;
   }
 
-  status.textContent = "Распознаю КБЖУ…";
-  const scanData = new FormData();
-  scanData.append("initData", getInitData());
-  scanData.append("file", file);
+  status.textContent = "Импортирую из FatSecret…";
+  const formData = new FormData();
+  formData.append("initData", getInitData());
+  formData.append("url", url);
 
   try {
-    const res = await fetch(`${API_BASE}/api/nutrition-scan`, { method: "POST", body: scanData });
+    const res = await fetch(`${API_BASE}/api/nutrition-fatsecret-import`, { method: "POST", body: formData });
     if (!res.ok) throw new Error(await res.text());
-    const scan = await res.json();
-    const recognized = ["kcal", "protein", "fat", "carbs"].some(f => scan[f] != null);
-    if (recognized) {
-      ["kcal", "protein", "fat", "carbs"].forEach(f => {
-        document.getElementById(`meal-${f}`).value = scan[f] ?? "";
-      });
-      document.getElementById("meal-form").hidden = false;
-      status.textContent = "Распознано — проверь и сохрани";
-    } else {
-      status.textContent = "Не удалось распознать КБЖУ — впиши вручную";
-    }
+    const data = await res.json();
+    NUTRITION_LOGS.push({ ts: data.ts, kcal: data.kcal, protein: data.protein, fat: data.fat, carbs: data.carbs, source: "fatsecret", url: data.url });
+    input.value = "";
+    renderNutritionToday();
+    renderWeekNutrition();
+    status.textContent = `Импортировано: ${data.kcal ?? 0} ккал · Б${data.protein ?? 0} Ж${data.fat ?? 0} У${data.carbs ?? 0}`;
   } catch (err) {
-    status.textContent = "Фото сохранено, но распознать КБЖУ не получилось — впиши вручную";
+    status.textContent = "Не удалось импортировать — проверь ссылку и попробуй ещё раз";
   }
 
-  e.target.value = "";
-  setTimeout(() => (status.hidden = true), 2500);
+  setTimeout(() => (status.hidden = true), 4000);
 });
 
 // ---------- ИИ-консультант ----------
