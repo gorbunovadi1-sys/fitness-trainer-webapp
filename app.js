@@ -1099,7 +1099,7 @@ function computeResultData() {
   }
 
   const measureDeltas = {};
-  ["waist", "hips", "chest"].forEach(key => {
+  ["waist", "zhivot", "bedra", "bedro"].forEach(key => {
     const first = MEASUREMENTS.find(m => m[key] != null);
     const last = [...MEASUREMENTS].reverse().find(m => m[key] != null);
     if (first && last && first !== last) measureDeltas[key] = Math.round((last[key] - first[key]) * 10) / 10;
@@ -1127,7 +1127,7 @@ function renderResultHero() {
 }
 
 // ---------- Карточка результата для Stories ----------
-const MEASURE_SHARE_LABELS = { waist: "см в талии", hips: "см в бёдрах", chest: "см в груди" };
+const MEASURE_SHARE_LABELS = { waist: "см в талии", zhivot: "см в животе", bedra: "см в бёдрах", bedro: "см в бедре" };
 
 async function drawShareCard() {
   const data = computeResultData();
@@ -1177,6 +1177,9 @@ async function drawShareCard() {
   ctx.font = "800 38px Inter, sans-serif";
   ctx.fillText("POBEDINSKY FIT", W / 2, H - 80);
 }
+
+document.getElementById("measure-guide-btn").addEventListener("click", () => showScreen("measure-guide"));
+document.getElementById("photo-guide-btn").addEventListener("click", () => showScreen("photo-guide"));
 
 document.getElementById("share-result-btn").addEventListener("click", async () => {
   document.getElementById("share-card-modal").hidden = false;
@@ -1265,8 +1268,9 @@ function renderWeightTab() {
 }
 
 const MEASUREMENT_FIELDS = [
-  ["weight", "Вес", "кг"], ["waist", "Талия", "см"], ["hips", "Бёдра", "см"],
-  ["chest", "Грудь", "см"], ["arms", "Руки", "см"], ["thighs", "Бедро", "см"],
+  ["weight", "Вес", "кг"], ["waist", "Талия", "см"], ["zhivot", "Живот", "см"],
+  ["bedra", "Бёдра", "см"], ["bedro", "Бедро", "см"], ["ikry", "Икры", "см"],
+  ["ruki", "Руки", "см"], ["plechi", "Плечи", "см"], ["spina_grud", "Спина (грудь)", "см"],
 ];
 let editingMeasurementId = null;
 
@@ -1477,7 +1481,7 @@ function resetMeasurementForm() {
   editingMeasurementId = null;
   document.getElementById("submit-measurement").textContent = "Сохранить замер";
   document.getElementById("cancel-edit-measurement").hidden = true;
-  ["weight", "waist", "hips", "chest", "arms", "thighs"].forEach(f => (document.getElementById(`m-${f}`).value = ""));
+  MEASUREMENT_FIELDS.forEach(([f]) => (document.getElementById(`m-${f}`).value = ""));
   document.getElementById("m-date").value = todayInputValue();
 }
 
@@ -1487,7 +1491,7 @@ let measurementSubmitting = false;
 
 document.getElementById("submit-measurement").addEventListener("click", async (e) => {
   if (measurementSubmitting) return;
-  const fields = ["weight", "waist", "hips", "chest", "arms", "thighs"];
+  const fields = MEASUREMENT_FIELDS.map(([f]) => f);
   const payload = {};
   fields.forEach(f => {
     const val = document.getElementById(`m-${f}`).value;
