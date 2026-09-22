@@ -256,6 +256,16 @@ html, body {
   font-size: 13px;
 }
 .nutrition-entry-row img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
+.nutrition-entry-del {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 14px;
+  padding: 4px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nutrition-entry-del:hover { color: var(--danger); }
 
 /* ---------- Rest day / extra cardio ---------- */
 .rest-day-card {
@@ -683,7 +693,10 @@ html, body {
   border-radius: 12px;
   padding: 10px 14px;
 }
-.week-day-card .week-day-row { background: none; border: none; padding: 0; }
+.week-day-card .week-day-row { background: none; border: none; padding: 0; cursor: pointer; }
+.week-day-entries { margin-top: 8px; }
+.week-day-entries .nutrition-entry-row { margin-bottom: 6px; }
+.week-day-entries .nutrition-entry-row:last-child { margin-bottom: 0; }
 .week-day-detail {
   display: flex;
   align-items: center;

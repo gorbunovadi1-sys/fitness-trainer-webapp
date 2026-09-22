@@ -1581,6 +1581,40 @@ function todayDateStr() {
   return localDateKey(new Date());
 }
 
+async function deleteNutritionLog(id) {
+  if (!confirm("Удалить эту запись питания?")) return;
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/nutrition-log/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
+  } catch (e) {
+    alert("Не удалось удалить — проверь интернет-соединение и попробуй ещё раз.");
+    return;
+  }
+  if (!res.ok) {
+    alert("Не удалось удалить — попробуй ещё раз.");
+    return;
+  }
+  NUTRITION_LOGS = NUTRITION_LOGS.filter(n => n.id !== id);
+  renderNutritionToday();
+  renderWeekNutrition();
+}
+
+function nutritionEntryRowHtml(n) {
+  const time = new Date(n.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  const link = n.source === "fatsecret" && n.url ? ` · <a href="${n.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
+  const delBtn = n.id != null ? `<button class="nutrition-entry-del" data-del-nutrition="${n.id}" title="Удалить">✕</button>` : "";
+  return `<div class="nutrition-entry-row"><span>${time}</span><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}${link}</span>${delBtn}</div>`;
+}
+
+function wireNutritionDeleteButtons(root) {
+  root.querySelectorAll("[data-del-nutrition]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      deleteNutritionLog(Number(btn.dataset.delNutrition));
+    });
+  });
+}
+
 function renderNutritionToday() {
   const todayStr = todayDateStr();
   const logsToday = nutritionLogsForDate(todayStr);
@@ -1601,11 +1635,8 @@ function renderNutritionToday() {
     return;
   }
   listWrap.className = "";
-  listWrap.innerHTML = logsToday.slice().sort((a, b) => a.ts.localeCompare(b.ts)).map(n => {
-    const time = new Date(n.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-    const link = n.source === "fatsecret" && n.url ? ` · <a href="${n.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
-    return `<div class="nutrition-entry-row"><span>${time}</span><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}${link}</span></div>`;
-  }).join("");
+  listWrap.innerHTML = logsToday.slice().sort((a, b) => a.ts.localeCompare(b.ts)).map(nutritionEntryRowHtml).join("");
+  wireNutritionDeleteButtons(listWrap);
 }
 
 function average(values) {
@@ -1655,7 +1686,7 @@ function renderWeekNutrition() {
     const link = fatsecretLog ? ` · <a href="${fatsecretLog.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
     return `
       <div class="week-day-card">
-        <div class="week-day-row">
+        <div class="week-day-row" data-toggle-day-entries="${d.dateStr}">
           <div class="week-day-name">${label}</div>
           <div class="week-day-bar-wrap"><div class="week-day-bar ${over ? "over" : "ok"}" style="width:${pct}%"></div></div>
           <div class="week-day-kcal">${Math.round(d.sums.kcal)} ккал</div>
@@ -1664,8 +1695,19 @@ function renderWeekNutrition() {
           <span>Б${Math.round(d.sums.protein)} Ж${Math.round(d.sums.fat)} У${Math.round(d.sums.carbs)}</span>
           <span>${link}</span>
         </div>
+        <div class="week-day-entries" hidden data-entries="${d.dateStr}">
+          ${d.logs.slice().sort((a, b) => a.ts.localeCompare(b.ts)).map(nutritionEntryRowHtml).join("")}
+        </div>
       </div>`;
   }).join("");
+
+  document.getElementById("week-day-list").querySelectorAll("[data-toggle-day-entries]").forEach(row => {
+    row.addEventListener("click", () => {
+      const entries = row.closest(".week-day-card").querySelector("[data-entries]");
+      if (entries) entries.hidden = !entries.hidden;
+    });
+  });
+  wireNutritionDeleteButtons(document.getElementById("week-day-list"));
 
   if (!daysWithData.length) {
     document.getElementById("week-summary").innerHTML = "";
@@ -1913,6 +1955,32 @@ document.getElementById("submit-checkin").addEventListener("click", async () => 
 
 let fatsecretImporting = false;
 
+async function importFatSecret(url, status, replace) {
+  const formData = new FormData();
+  formData.append("initData", getInitData());
+  formData.append("url", url);
+  if (replace) formData.append("replace", "true");
+
+  const res = await fetch(`${API_BASE}/api/nutrition-fatsecret-import`, { method: "POST", body: formData });
+
+  if (res.status === 409) {
+    let detail = null;
+    try { detail = (await res.json()).detail; } catch (e) {}
+    if (detail && detail.code === "duplicate_day") {
+      const dateLabel = new Date(detail.date + "T12:00:00").toLocaleDateString("ru-RU");
+      const confirmed = confirm(
+        `За ${dateLabel} уже есть запись из FatSecret (${detail.existing_kcal ?? 0} ккал). Заменить её новыми данными?`
+      );
+      if (confirmed) return importFatSecret(url, status, true);
+      status.textContent = "Отменено — старая запись оставлена без изменений";
+      return null;
+    }
+  }
+
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 document.getElementById("save-fatsecret-btn").addEventListener("click", async () => {
   if (fatsecretImporting) return;
   const btn = document.getElementById("save-fatsecret-btn");
@@ -1928,21 +1996,21 @@ document.getElementById("save-fatsecret-btn").addEventListener("click", async ()
   }
 
   status.textContent = "Импортирую из FatSecret…";
-  const formData = new FormData();
-  formData.append("initData", getInitData());
-  formData.append("url", url);
 
   fatsecretImporting = true;
   btn.disabled = true;
   try {
-    const res = await fetch(`${API_BASE}/api/nutrition-fatsecret-import`, { method: "POST", body: formData });
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    insertSortedByTs(NUTRITION_LOGS, { ts: data.ts, kcal: data.kcal, protein: data.protein, fat: data.fat, carbs: data.carbs, source: "fatsecret", url: data.url });
-    input.value = "";
-    renderNutritionToday();
-    renderWeekNutrition();
-    status.textContent = `Импортировано: ${data.kcal ?? 0} ккал · Б${data.protein ?? 0} Ж${data.fat ?? 0} У${data.carbs ?? 0}`;
+    const data = await importFatSecret(url, status, false);
+    if (data) {
+      if (data.replaced_ids && data.replaced_ids.length) {
+        NUTRITION_LOGS = NUTRITION_LOGS.filter(n => !data.replaced_ids.includes(n.id));
+      }
+      insertSortedByTs(NUTRITION_LOGS, { id: data.id, ts: data.ts, kcal: data.kcal, protein: data.protein, fat: data.fat, carbs: data.carbs, source: "fatsecret", url: data.url });
+      input.value = "";
+      renderNutritionToday();
+      renderWeekNutrition();
+      status.textContent = `Импортировано: ${data.kcal ?? 0} ккал · Б${data.protein ?? 0} Ж${data.fat ?? 0} У${data.carbs ?? 0}`;
+    }
   } catch (err) {
     status.textContent = "Не удалось импортировать — проверь ссылку и попробуй ещё раз";
   } finally {
