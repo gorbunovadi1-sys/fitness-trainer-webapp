@@ -1234,11 +1234,28 @@ function renderPhotos() {
         <div class="photo-history-group">
           <div class="photo-history-date">${new Date(date).toLocaleDateString("ru-RU")}</div>
           <div class="photo-history-thumbs">
-            ${photos.map(p => `<img src="${photoUrl(p)}" class="photo-thumb" alt="${PHOTO_ANGLE_LABEL[p.angle] || p.angle}" />`).join("")}
+            ${photos.map(p => `
+              <div class="photo-thumb-wrap">
+                <img src="${photoUrl(p)}" class="photo-thumb" alt="${PHOTO_ANGLE_LABEL[p.angle] || p.angle}" />
+                <button class="photo-thumb-delete" data-delete-photo="${p.id}" title="Удалить">✕</button>
+              </div>
+            `).join("")}
           </div>
         </div>
       `).join("")
     : `<div class="hint-text">Фото пока нет.</div>`;
+
+  historyWrap.querySelectorAll("[data-delete-photo]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Удалить это фото?")) return;
+      const id = Number(btn.dataset.deletePhoto);
+      try {
+        await fetch(`${API_BASE}/api/photo/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
+      } catch (e) {}
+      PHOTOS = PHOTOS.filter(p => p.id !== id);
+      renderPhotos();
+    });
+  });
 
   if (groups.length >= 2) {
     const [firstDate, firstPhotos] = groups[0];
