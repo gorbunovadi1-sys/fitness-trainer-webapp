@@ -1600,10 +1600,9 @@ async function deleteNutritionLog(id) {
 }
 
 function nutritionEntryRowHtml(n) {
-  const time = new Date(n.ts).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   const link = n.source === "fatsecret" && n.url ? ` · <a href="${n.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
   const delBtn = n.id != null ? `<button class="nutrition-entry-del" data-del-nutrition="${n.id}" title="Удалить">✕</button>` : "";
-  return `<div class="nutrition-entry-row"><span>${time}</span><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}${link}</span>${delBtn}</div>`;
+  return `<div class="nutrition-entry-row"><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}${link}</span>${delBtn}</div>`;
 }
 
 function wireNutritionDeleteButtons(root) {
@@ -1615,15 +1614,25 @@ function wireNutritionDeleteButtons(root) {
   });
 }
 
+const MACRO_TOLERANCE = 5;
+
+function setMacroValue(elId, actual, target) {
+  const el = document.getElementById(elId);
+  el.textContent = target ? `${Math.round(actual)} / ${Math.round(target)} г` : `${Math.round(actual)} г`;
+  const diff = actual - (target || 0);
+  el.classList.toggle("over", !!target && diff > MACRO_TOLERANCE);
+  el.classList.toggle("under", !!target && diff < -MACRO_TOLERANCE);
+}
+
 function renderNutritionToday() {
   const todayStr = todayDateStr();
   const logsToday = nutritionLogsForDate(todayStr);
   const sums = sumNutrition(logsToday);
 
   document.getElementById("nutrition-today-kcal").textContent = Math.round(sums.kcal);
-  document.getElementById("nutrition-today-protein").textContent = `${Math.round(sums.protein)} г`;
-  document.getElementById("nutrition-today-fat").textContent = `${Math.round(sums.fat)} г`;
-  document.getElementById("nutrition-today-carbs").textContent = `${Math.round(sums.carbs)} г`;
+  setMacroValue("nutrition-today-protein", sums.protein, NUTRITION_TARGET.protein);
+  setMacroValue("nutrition-today-fat", sums.fat, NUTRITION_TARGET.fat);
+  setMacroValue("nutrition-today-carbs", sums.carbs, NUTRITION_TARGET.carbs);
   const pct = NUTRITION_TARGET.kcal ? Math.min(100, Math.round((sums.kcal / NUTRITION_TARGET.kcal) * 100)) : 0;
   const kcalDiff = sums.kcal - NUTRITION_TARGET.kcal;
   const ringColor = kcalDiff > 50 ? "var(--danger)" : kcalDiff < -50 ? "var(--warning)" : "var(--accent)";

@@ -623,6 +623,8 @@ html, body {
 .macro-list { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .macro-row { font-size: 14px; display: flex; align-items: center; gap: 8px; color: var(--text-dim); }
 .macro-row b { color: var(--text); margin-left: auto; }
+.macro-value.over { color: var(--danger); }
+.macro-value.under { color: var(--warning); }
 .macro-dot { width: 10px; height: 10px; border-radius: 50%; }
 .macro-b { background: #c6ff3d; }
 .macro-f { background: #ffb84d; }
