@@ -950,15 +950,26 @@ function renderAchievements() {
 // ---------- Усиленный экран результата ----------
 function computeResultData() {
   const weights = MEASUREMENTS.filter(m => m.weight != null);
-  if (weights.length < 2 || !PROGRAM_STARTED_AT) return null;
+  if (weights.length < 2) return null;
 
   const start = weights[0].weight;
   const current = weights[weights.length - 1].weight;
   const delta = Math.round((current - start) * 10) / 10;
-  const weeksElapsed = Math.max(1, Math.floor((Date.now() - new Date(PROGRAM_STARTED_AT).getTime()) / (7 * 86400000)));
+  // "За сколько недель" — по датам самих замеров (их можно вносить задним числом), а не по
+  // дате старта программы: иначе бэкдейтнутые замеры показывали бы период в 1 неделю всегда.
+  const spanMs = new Date(weights[weights.length - 1].ts).getTime() - new Date(weights[0].ts).getTime();
+  const weeksElapsed = Math.max(1, Math.round(spanMs / (7 * 86400000)));
 
-  const expectedPerWeek = DAYS.filter(d => PROGRAM[d] && PROGRAM[d].exercises.length).length;
-  const compliance = expectedPerWeek ? Math.min(100, Math.round((WORKOUT_DATES.length / (expectedPerWeek * weeksElapsed)) * 100)) : null;
+  // "% соблюдения плана" — отдельная величина, ей нужна именно длительность самой программы
+  // (сколько тренировок реально ожидалось), а не период между замерами веса.
+  let compliance = null;
+  if (PROGRAM_STARTED_AT) {
+    const programWeeks = Math.max(1, Math.floor((Date.now() - new Date(PROGRAM_STARTED_AT).getTime()) / (7 * 86400000)));
+    const expectedPerWeek = DAYS.filter(d => PROGRAM[d] && PROGRAM[d].exercises.length).length;
+    if (expectedPerWeek) {
+      compliance = Math.min(100, Math.round((WORKOUT_DATES.length / (expectedPerWeek * programWeeks)) * 100));
+    }
+  }
 
   const measureDeltas = {};
   ["waist", "hips", "chest"].forEach(key => {
