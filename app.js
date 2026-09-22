@@ -143,13 +143,19 @@ function getInitData() {
 
 async function postJSON(path, body) {
   try {
-    await fetch(API_BASE + path, {
+    const res = await fetch(API_BASE + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ initData: getInitData(), ...body }),
     });
+    if (!res.ok) {
+      console.warn("API call failed:", path, res.status);
+      return false;
+    }
+    return true;
   } catch (e) {
     console.warn("API call failed:", path, e);
+    return false;
   }
 }
 
@@ -1180,9 +1186,17 @@ function renderMeasurementsHistory() {
     btn.addEventListener("click", async () => {
       if (!confirm("Удалить эту запись замера?")) return;
       const id = Number(btn.dataset.deleteMeasurement);
+      let res;
       try {
-        await fetch(`${API_BASE}/api/measurement/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
-      } catch (e) {}
+        res = await fetch(`${API_BASE}/api/measurement/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
+      } catch (e) {
+        alert("Не удалось удалить — проверь интернет-соединение и попробуй ещё раз.");
+        return;
+      }
+      if (!res.ok) {
+        alert("Не удалось удалить запись — попробуй ещё раз.");
+        return;
+      }
       MEASUREMENTS = MEASUREMENTS.filter(m => m.id !== id);
       renderMeasurementsHistory();
       renderWeightTab();
@@ -1235,9 +1249,17 @@ function renderPhotos() {
     btn.addEventListener("click", async () => {
       if (!confirm("Удалить это фото?")) return;
       const id = Number(btn.dataset.deletePhoto);
+      let res;
       try {
-        await fetch(`${API_BASE}/api/photo/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
-      } catch (e) {}
+        res = await fetch(`${API_BASE}/api/photo/${id}?initData=${encodeURIComponent(getInitData())}`, { method: "DELETE" });
+      } catch (e) {
+        alert("Не удалось удалить — проверь интернет-соединение и попробуй ещё раз.");
+        return;
+      }
+      if (!res.ok) {
+        alert("Не удалось удалить фото — попробуй ещё раз.");
+        return;
+      }
       PHOTOS = PHOTOS.filter(p => p.id !== id);
       renderPhotos();
     });
@@ -1356,22 +1378,40 @@ document.getElementById("submit-measurement").addEventListener("click", async ()
 
   if (editingMeasurementId) {
     const id = editingMeasurementId;
+    let res;
     try {
-      await fetch(`${API_BASE}/api/measurement/${id}`, {
+      res = await fetch(`${API_BASE}/api/measurement/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ initData: getInitData(), ...payload }),
       });
-    } catch (e) {}
+    } catch (e) {
+      alert("Не удалось сохранить изменения — проверь интернет-соединение и попробуй ещё раз.");
+      return;
+    }
+    if (!res.ok) {
+      alert("Не удалось сохранить изменения — попробуй ещё раз.");
+      return;
+    }
     delete payload.ts;
     MEASUREMENTS = MEASUREMENTS.filter(m => m.id !== id);
     insertSortedByTs(MEASUREMENTS, { id, ts, ...payload });
   } else {
-    const res = await fetch(`${API_BASE}/api/measurement`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initData: getInitData(), ...payload }),
-    });
+    let res;
+    try {
+      res = await fetch(`${API_BASE}/api/measurement`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData: getInitData(), ...payload }),
+      });
+    } catch (e) {
+      alert("Не удалось сохранить замер — проверь интернет-соединение и попробуй ещё раз.");
+      return;
+    }
+    if (!res.ok) {
+      alert("Не удалось сохранить замер — попробуй ещё раз.");
+      return;
+    }
     let newId = null;
     try { newId = (await res.json()).id; } catch (e) {}
     delete payload.ts;
