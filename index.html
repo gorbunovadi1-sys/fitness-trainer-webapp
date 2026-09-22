@@ -34,7 +34,10 @@
 
     <div class="goal-card" id="anketa-nudge-card" data-nav="anketa">
       <div class="goal-card-head">
-        <span class="goal-card-label" id="anketa-nudge-label">📝 АНКЕТА</span>
+        <div class="goal-card-label-group">
+          <span class="icon-badge sm" data-icon="notebook"></span>
+          <span class="goal-card-label" id="anketa-nudge-label">АНКЕТА</span>
+        </div>
         <span id="anketa-nudge-title">Заполни анкету</span>
       </div>
       <div class="goal-card-numbers" id="anketa-nudge-sub">Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут</div>
@@ -42,7 +45,10 @@
 
     <div class="goal-card" id="tariff-nudge-card" data-nav="tariff" hidden>
       <div class="goal-card-head">
-        <span class="goal-card-label">💳 ТАРИФ</span>
+        <div class="goal-card-label-group">
+          <span class="icon-badge sm" data-icon="card"></span>
+          <span class="goal-card-label">ТАРИФ</span>
+        </div>
         <span id="tariff-nudge-title">Выбери тариф</span>
       </div>
       <div class="goal-card-numbers" id="tariff-nudge-sub">Тренер подготовил варианты — выбери свой</div>
@@ -50,7 +56,10 @@
 
     <div class="goal-card" id="goal-card" data-nav="anketa" data-open-section="goals" hidden>
       <div class="goal-card-head">
-        <span class="goal-card-label">🎯 ТВОЯ ЦЕЛЬ</span>
+        <div class="goal-card-label-group">
+          <span class="icon-badge sm" data-icon="target"></span>
+          <span class="goal-card-label">ТВОЯ ЦЕЛЬ</span>
+        </div>
         <span id="goal-card-title">—</span>
       </div>
       <div class="goal-progress-bar"><div class="goal-progress-fill" id="goal-progress-fill"></div></div>
@@ -76,7 +85,7 @@
     <button class="btn-primary" id="today-cta-btn" data-nav="workouts">Начать тренировку →</button>
 
     <div class="list-card" data-nav="nutrition">
-      <div class="list-card-icon">🍽</div>
+      <div class="list-card-icon" data-icon="fork"></div>
       <div class="list-card-body">
         <div class="list-card-title">Дневник питания</div>
         <div class="list-card-sub" id="nutrition-card-sub">Заполни за сегодня</div>
@@ -85,7 +94,7 @@
     </div>
 
     <div class="list-card" id="checkin-banner" data-nav="checkin" hidden>
-      <div class="list-card-icon">📋</div>
+      <div class="list-card-icon" data-icon="clipboard"></div>
       <div class="list-card-body">
         <div class="list-card-title">Еженедельный чек-ин</div>
         <div class="list-card-sub">Пройди за 1 минуту</div>
@@ -94,7 +103,7 @@
     </div>
 
     <div class="list-card" data-nav="ai">
-      <div class="list-card-icon">🤖</div>
+      <div class="list-card-icon" data-icon="bot"></div>
       <div class="list-card-body">
         <div class="list-card-title">ИИ-консультант</div>
         <div class="list-card-sub">Быстрый ответ на вопрос о тренировках и питании</div>
@@ -114,7 +123,7 @@
       </div>
       <div class="hero-text">
         <div class="hero-greeting" id="workout-day-title">ВЕРХ ТЕЛА</div>
-        <div class="hero-sub" id="workout-day-meta">⏱ 40 мин &nbsp;·&nbsp; 🔥 8 упражнений</div>
+        <div class="hero-sub" id="workout-day-meta">40 мин &nbsp;·&nbsp; 8 упражнений</div>
       </div>
     </div>
 
@@ -150,7 +159,7 @@
     </div>
     <div class="session-progress-bar"><div class="session-progress-fill" id="session-progress-fill"></div></div>
 
-    <div class="session-exercise-icon" id="session-exercise-icon">💪</div>
+    <div class="session-exercise-icon" id="session-exercise-icon"></div>
     <div class="session-exercise-name" id="session-exercise-name">—</div>
     <div class="session-exercise-target" id="session-exercise-target">—</div>
 
@@ -175,7 +184,7 @@
   <!-- ===== WORKOUT COMPLETE ===== -->
   <section class="screen" id="screen-session-complete" data-screen hidden>
     <div class="complete-wrap">
-      <div class="complete-check">✓</div>
+      <div class="complete-check" data-icon="check"></div>
       <div class="complete-title">ТРЕНИРОВКА<br />ВЫПОЛНЕНА</div>
       <div class="stat-row">
         <div class="stat-card">
@@ -193,9 +202,9 @@
       </div>
       <div class="section-label">Как прошло?</div>
       <div class="mood-row" id="complete-mood-row">
-        <button class="mood-btn" data-mood="hard">😩<span>Тяжело</span></button>
-        <button class="mood-btn" data-mood="ok">🙂<span>Нормально</span></button>
-        <button class="mood-btn" data-mood="great">🔥<span>Отлично</span></button>
+        <button class="mood-btn" data-mood="hard"><span data-icon="sad"></span><span>Тяжело</span></button>
+        <button class="mood-btn" data-mood="ok"><span data-icon="neutral"></span><span>Нормально</span></button>
+        <button class="mood-btn" data-mood="great"><span data-icon="flame"></span><span>Отлично</span></button>
       </div>
       <div class="section-label">Насколько тяжело в целом? (RPE)</div>
       <div class="scale-10" id="complete-rpe-scale" data-scale></div>
@@ -283,7 +292,7 @@
       <div class="result-hero-period" id="result-hero-period"></div>
       <div class="result-hero-range" id="result-hero-range"></div>
       <div class="result-hero-stats" id="result-hero-stats"></div>
-      <button class="btn-outline" id="share-result-btn" style="margin-top:16px;">📤 Поделиться результатом</button>
+      <button class="btn-outline btn-with-icon" id="share-result-btn" style="margin-top:16px;"><span data-icon="share"></span>Поделиться результатом</button>
     </div>
 
     <div class="segmented" id="progress-segmented">
@@ -314,7 +323,7 @@
 
     <div data-view-content="measurements" id="progress-measurements" hidden>
       <div class="section-label">Новая запись</div>
-      <div class="hint-text tip-text">🌅 Взвешивайся и делай замеры по утрам натощак, до еды и воды — так цифры будет честно сравнивать раз от раза.</div>
+      <div class="hint-text tip-text">Взвешивайся и делай замеры по утрам натощак, до еды и воды — так цифры будет честно сравнивать раз от раза.</div>
       <div class="measurement-form" style="margin-bottom: 4px;">
         <label>Дата<input type="date" id="m-date" /></label>
       </div>
@@ -382,19 +391,19 @@
     </div>
 
     <div class="checkin-field">
-      <div class="checkin-label">🌙 Сон</div>
+      <div class="checkin-label"><span data-icon="moon"></span>Сон</div>
       <div class="scale-10" data-scale></div>
     </div>
     <div class="checkin-field">
-      <div class="checkin-label">😣 Стресс</div>
+      <div class="checkin-label"><span data-icon="pulse"></span>Стресс</div>
       <div class="scale-10" data-scale></div>
     </div>
     <div class="checkin-field">
-      <div class="checkin-label">💚 Самочувствие</div>
+      <div class="checkin-label"><span data-icon="heart"></span>Самочувствие</div>
       <div class="scale-10" data-scale></div>
     </div>
     <div class="checkin-field">
-      <div class="checkin-label">📌 Соблюдение плана</div>
+      <div class="checkin-label"><span data-icon="flag"></span>Соблюдение плана</div>
       <div class="scale-10" data-scale></div>
     </div>
 
@@ -440,10 +449,10 @@
     <div class="achievements-grid" id="achievements-grid"></div>
 
     <div class="menu-list">
-      <div class="menu-item" data-nav="anketa">📝 Моя анкета</div>
-      <div class="menu-item" data-nav="tariff">💳 Тариф</div>
-      <div class="menu-item" data-nav="settings">⚙️ Настройки</div>
-      <div class="menu-item" id="contact-trainer-btn">💬 Написать тренеру</div>
+      <div class="menu-item" data-nav="anketa"><span class="icon-badge sm" data-icon="notebook"></span>Моя анкета</div>
+      <div class="menu-item" data-nav="tariff"><span class="icon-badge sm" data-icon="card"></span>Тариф</div>
+      <div class="menu-item" data-nav="settings"><span class="icon-badge sm" data-icon="gear"></span>Настройки</div>
+      <div class="menu-item" id="contact-trainer-btn"><span class="icon-badge sm" data-icon="chat"></span>Написать тренеру</div>
     </div>
   </section>
 
@@ -521,7 +530,7 @@
 
 <div id="subscription-gate-screen" class="subscription-gate-screen" hidden>
   <div class="subscription-gate-card">
-    <div class="subscription-gate-icon">🔒</div>
+    <div class="subscription-gate-icon" data-icon="lock"></div>
     <div class="subscription-gate-title">Доступ закрыт</div>
     <div class="subscription-gate-text">Пробный период или оплаченный доступ закончились. Напиши тренеру, чтобы продлить.</div>
     <button class="btn-primary" id="subscription-gate-contact-btn">Написать тренеру</button>
@@ -553,17 +562,17 @@
 
 <div class="modal-overlay" id="tariff-contact-modal" hidden>
   <div class="modal-card">
-    <div class="modal-icon">✅</div>
+    <div class="modal-icon" data-icon="check"></div>
     <h3>Заявка отправлена!</h3>
     <p>Тренер получил твой выбор тарифа. Напиши ему сам(а) — так быстрее обсудите оплату и детали, текст уже готов.</p>
-    <button class="btn-primary" id="tariff-modal-contact-btn">💬 Написать тренеру</button>
+    <button class="btn-primary btn-with-icon" id="tariff-modal-contact-btn"><span data-icon="chat"></span>Написать тренеру</button>
     <button class="btn-outline" id="tariff-modal-close-btn">Позже</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="trainer-action-modal" hidden>
   <div class="modal-card">
-    <div class="modal-icon">✏️</div>
+    <div class="modal-icon" data-icon="pencil"></div>
     <h3>Тренер обновил твой план</h3>
     <p id="trainer-action-text"></p>
     <button class="btn-primary" id="trainer-action-ok-btn">Понятно</button>
@@ -573,7 +582,7 @@
 <div class="modal-overlay" id="share-card-modal" hidden>
   <div class="modal-card" style="max-width:300px;">
     <canvas id="share-canvas" style="width:100%;border-radius:14px;margin-bottom:16px;display:block;"></canvas>
-    <button class="btn-primary" id="share-download-btn">⬇ Скачать картинку</button>
+    <button class="btn-primary btn-with-icon" id="share-download-btn"><span data-icon="download"></span>Скачать картинку</button>
     <button class="btn-outline" id="share-close-btn">Закрыть</button>
   </div>
 </div>

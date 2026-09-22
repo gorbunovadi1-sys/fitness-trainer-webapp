@@ -160,9 +160,10 @@ html, body {
 .goal-card-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 10px;
 }
+.goal-card-label-group { display: flex; align-items: center; gap: 10px; }
 .goal-card-label { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; }
 #goal-card-title { font-weight: 700; font-size: 14px; }
 .goal-progress-bar {
@@ -186,7 +187,7 @@ html, body {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
   padding: 26px 22px; width: 100%; max-width: 340px; text-align: center;
 }
-.modal-icon { font-size: 34px; margin-bottom: 6px; }
+.modal-icon { width: 52px; height: 52px; border-radius: 16px; background: rgba(201,255,61,0.12); color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
 .modal-card h3 { margin: 0 0 10px; font-size: 17px; }
 .modal-card p { margin: 0 0 20px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 .modal-card .btn-primary, .modal-card .btn-outline { margin-bottom: 10px; }
@@ -277,7 +278,8 @@ html, body {
   text-align: center;
   margin: 8px 0 20px;
 }
-.rest-day-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.rest-day-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.rest-day-title .icon { color: var(--accent); }
 .rest-day-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
 #cardio-form { text-align: left; margin-top: 14px; }
 
@@ -328,6 +330,7 @@ html, body {
   margin-bottom: 10px;
   cursor: pointer;
 }
+.btn-with-icon { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 /* ---------- List card (home) ---------- */
 .list-card {
@@ -341,7 +344,7 @@ html, body {
   margin-bottom: 12px;
   cursor: pointer;
 }
-.list-card-icon { font-size: 22px; }
+.list-card-icon { width: 38px; height: 38px; border-radius: 11px; background: rgba(201,255,61,0.12); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .list-card-body { flex: 1; }
 .list-card-title { font-weight: 700; font-size: 15px; }
 .list-card-sub { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
@@ -440,6 +443,7 @@ html, body {
   width: 48px; height: 48px;
   border-radius: 10px;
   background: linear-gradient(160deg, #2a2a2a, #161616);
+  color: var(--accent);
   display: flex; align-items: center; justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
@@ -538,6 +542,7 @@ html, body {
 /* ---------- Достижения ---------- */
 .achievements-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
 .achievement-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; text-align: center; }
+.achievement-card .icon-badge { margin: 0 auto 8px; }
 .achievement-value { font-size: 18px; font-weight: 800; }
 .achievement-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 
@@ -545,10 +550,13 @@ html, body {
 .mood-row { display: flex; gap: 10px; margin-bottom: 20px; }
 .mood-btn {
   flex: 1; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 14px;
-  padding: 14px 8px; font-size: 26px; cursor: pointer; color: var(--text);
+  padding: 14px 8px; cursor: pointer; color: var(--text-dim);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
-.mood-btn span { display: block; font-size: 11px; color: var(--text-dim); margin-top: 4px; }
-.mood-btn.selected { border-color: var(--accent); background: rgba(198,255,61,0.08); }
+.mood-btn .icon { width: 24px; height: 24px; }
+.mood-btn span { display: block; font-size: 11px; color: var(--text-dim); }
+.mood-btn.selected { border-color: var(--accent); background: rgba(198,255,61,0.08); color: var(--accent); }
+.mood-btn.selected span { color: var(--text); }
 
 /* ---------- Экран результата ---------- */
 .result-hero { text-align: center; margin-bottom: 20px; }
@@ -752,11 +760,17 @@ html, body {
   border: 1px solid var(--accent-dim);
   color: var(--accent);
   font-weight: 800;
-  text-align: center;
+  text-align: left;
   border-radius: 14px;
   padding: 14px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
+.banner-card .icon { flex-shrink: 0; margin-top: 1px; }
+.banner-card span { font-weight: 600; line-height: 1.4; }
+.banner-card.warn { border-color: var(--warning); color: var(--warning); }
 
 /* ---------- Check-in ---------- */
 .checkin-field {
@@ -767,6 +781,7 @@ html, body {
   margin-bottom: 12px;
 }
 .checkin-label { font-weight: 700; font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.checkin-label .icon { color: var(--accent); }
 .scale-10 {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
@@ -802,10 +817,11 @@ html, body {
   border-radius: 16px;
   background: var(--bg-card);
   border: 1px solid var(--border);
+  color: var(--accent);
   display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
   margin-bottom: 14px;
 }
+.session-exercise-icon .icon { width: 26px; height: 26px; }
 .session-exercise-name { font-size: 22px; font-weight: 800; }
 .session-exercise-target { color: var(--text-dim); font-size: 14px; margin-top: 2px; margin-bottom: 14px; }
 
@@ -860,11 +876,10 @@ html, body {
   border-radius: 50%;
   background: var(--accent);
   color: #0d0d0d;
-  font-size: 40px;
-  font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 24px;
 }
+.complete-check .icon { width: 40px; height: 40px; stroke-width: 2.2; }
 .complete-title {
   font-size: 26px;
   font-weight: 800;
@@ -1115,15 +1130,17 @@ html, body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px 14px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
 }
 .menu-item.health {
   border-color: var(--danger);
   color: var(--danger);
 }
+.menu-item.health .icon-badge { background: rgba(255,92,92,0.12); color: var(--danger); }
 
 /* ---------- Tab bar ---------- */
 .tabbar {
@@ -1152,6 +1169,19 @@ html, body {
   cursor: pointer;
 }
 .tab-icon { width: 22px; height: 22px; }
+
+/* ---------- Иконки вместо эмодзи ---------- */
+.icon { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.icon-badge {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: rgba(201,255,61,0.12); color: var(--accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.icon-badge.sm { width: 26px; height: 26px; border-radius: 8px; }
+.icon-inline { color: var(--accent); }
+.icon-inline.dim { color: var(--text-dim); }
+.icon-inline.warn { color: var(--warning); }
 .tab.active { color: var(--accent); }
 
 /* ---------- Доступ закрыт ---------- */
@@ -1173,6 +1203,11 @@ html, body {
   align-items: center;
   gap: 10px;
 }
-.subscription-gate-icon { font-size: 40px; }
+.subscription-gate-icon {
+  width: 64px; height: 64px; border-radius: 18px;
+  background: rgba(201,255,61,0.12); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.subscription-gate-icon .icon { width: 30px; height: 30px; }
 .subscription-gate-title { font-size: 20px; font-weight: 800; }
 .subscription-gate-text { color: var(--text-dim); font-size: 14px; line-height: 1.5; margin-bottom: 10px; }

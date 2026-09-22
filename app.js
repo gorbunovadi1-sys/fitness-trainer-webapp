@@ -1,3 +1,48 @@
+// ---------- Иконки (вместо эмодзи) ----------
+const ICON_PATHS = {
+  target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="0.6" fill="currentColor" stroke="none"/>',
+  card: '<rect x="3.5" y="6" width="17" height="12" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="7" y1="14.5" x2="11" y2="14.5"/>',
+  notebook: '<path d="M6.5 4h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><line x1="9" y1="8.5" x2="14.5" y2="8.5"/><line x1="9" y1="12" x2="14.5" y2="12"/><line x1="9" y1="15.5" x2="12.5" y2="15.5"/>',
+  fork: '<path d="M7 3v7a2 2 0 0 0 4 0V3M9 10v11"/><path d="M16 3c-1.4 1.6-2 3.4-2 5.5 0 1.8 1 3 2 3.5v9"/>',
+  clipboard: '<rect x="5.5" y="4.5" width="13" height="16" rx="2"/><rect x="9" y="3" width="6" height="3" rx="1"/><path d="M8.7 12.7l2.1 2.1L15.3 10"/>',
+  bot: '<rect x="5" y="8" width="14" height="11" rx="3"/><circle cx="9.5" cy="13.5" r="1.1"/><circle cx="14.5" cy="13.5" r="1.1"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1" fill="currentColor" stroke="none"/>',
+  dumbbell: '<path d="M4 12h16"/><rect x="2" y="9.5" width="3" height="5" rx="1"/><rect x="19" y="9.5" width="3" height="5" rx="1"/><rect x="6" y="8" width="2.4" height="8" rx="1"/><rect x="15.6" y="8" width="2.4" height="8" rx="1"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 13V9"/><path d="M9.5 3h5"/>',
+  moon: '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/>',
+  pulse: '<path d="M3 12h4l1.8-5 3 10 2-7.5 1.5 2.5h5.7"/>',
+  heart: '<path d="M12 20s-7-4.3-9.3-8.7C1.3 8 2.6 5 5.6 4.4c1.9-.4 3.7.5 4.6 2 .9-1.5 2.7-2.4 4.6-2 3 .6 4.3 3.6 2.9 6.9C19 15.7 12 20 12 20Z"/>',
+  flag: '<path d="M6 3v18"/><path d="M6 4.5h9l-2 3.5 2 3.5H6"/>',
+  flame: '<path d="M12 3c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1.3-.6-2-1.2-2.8.2 2-1 2.8-1.8 2.3.9-2.3-.6-3.2-1-4.5-.3 1.3-1.8 1.8-1.5 3.5-1-.6-1-2.7.5-5.5"/>',
+  trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4.5a2.5 2.5 0 0 0 2.5 4.2"/><path d="M17 5h2.5A2.5 2.5 0 0 1 17 9.2"/><path d="M12 13v3.5"/><path d="M8.5 20h7"/><path d="M9.7 16.5h4.6l.5 3.5h-5.6l.5-3.5Z"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
+  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.3M12 18.2v2.3M4.7 12H2.4M21.6 12h-2.3M6 6l1.6 1.6M16.4 16.4L18 18M18 6l-1.6 1.6M7.6 16.4L6 18"/>',
+  chat: '<path d="M4 5.5h16v11H9.5l-4 3.5v-3.5H4Z"/>',
+  warn: '<path d="M12 3.5 21 19H3Z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="16.7" r="0.55" fill="currentColor" stroke="none"/>',
+  pencil: '<path d="M4 20l1-4.2L15.2 5.6a1.5 1.5 0 0 1 2.1 0l1.1 1.1a1.5 1.5 0 0 1 0 2.1L8.2 19 4 20Z"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  sad: '<circle cx="12" cy="12" r="8"/><path d="M8.5 15.5c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2"/><path d="M9 10h.01M15 10h.01"/>',
+  neutral: '<circle cx="12" cy="12" r="8"/><path d="M8.5 14c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5"/><path d="M9 10h.01M15 10h.01"/>',
+  download: '<path d="M12 3v13"/><path d="M6.5 11.5 12 17l5.5-5.5"/><path d="M4.5 20.5h15"/>',
+  share: '<circle cx="18" cy="5" r="2.3"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="19" r="2.3"/><path d="M8.1 10.8l7.8-4.4M8.1 13.2l7.8 4.4"/>',
+};
+
+function icon(name, opts = {}) {
+  const { size = 20, cls = "" } = opts;
+  return `<svg class="icon ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
+}
+
+function iconBadge(name, size = 19) {
+  return `<span class="icon-badge">${icon(name, { size })}</span>`;
+}
+
+function populateStaticIcons(root = document) {
+  root.querySelectorAll("[data-icon]").forEach(el => {
+    const size = el.classList.contains("icon-badge") || el.classList.contains("modal-icon") || el.classList.contains("subscription-gate-icon") ? 19 : 20;
+    el.innerHTML = icon(el.dataset.icon, { size });
+  });
+}
+populateStaticIcons();
+
 // Telegram WebApp init (no-op safely outside Telegram)
 let CLIENT_NAME = "Спортсмен";
 try {
@@ -164,42 +209,46 @@ async function postJSON(path, body) {
 // DEMO_* — то, что видно, пока бэкенд недоступен (например, открыли вне Telegram без сети).
 const DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
+function demoExerciseIcon(weighted) {
+  return icon(weighted ? "dumbbell" : "timer", { size: 22 });
+}
+
 const DEMO_PROGRAM = {
   "Пн": {
     title: "НИЗ ТЕЛА", duration: "45 мин",
     exercises: [
-      { icon: "🏋", name: "Приседания с гантелями", sets: "4 × 10", weighted: true, weight: null, done: false },
-      { icon: "🦵", name: "Выпады", sets: "3 × 12", weighted: true, weight: null, done: false },
-      { icon: "🧱", name: "Ягодичный мостик", sets: "3 × 15", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Приседания с гантелями", sets: "4 × 10", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Выпады", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Ягодичный мостик", sets: "3 × 15", weighted: true, weight: null, done: false },
     ],
   },
   "Вт": { title: "ОТДЫХ", duration: "", exercises: [] },
   "Ср": {
     title: "ВЕРХ ТЕЛА", duration: "40 мин",
     exercises: [
-      { icon: "💪", name: "Жим гантелей лёжа", sets: "3 × 12", weighted: true, weight: null, done: false },
-      { icon: "🏋", name: "Тяга гантели в наклоне", sets: "3 × 12", weighted: true, weight: null, done: false },
-      { icon: "🤸", name: "Разведение гантелей", sets: "3 × 15", weighted: true, weight: null, done: false },
-      { icon: "🧱", name: "Планка", sets: "3 × 40 сек", weighted: false, done: false },
+      { icon: demoExerciseIcon(true), name: "Жим гантелей лёжа", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Тяга гантели в наклоне", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Разведение гантелей", sets: "3 × 15", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(false), name: "Планка", sets: "3 × 40 сек", weighted: false, done: false },
     ],
   },
   "Чт": {
     title: "КАРДИО", duration: "30 мин",
     exercises: [
-      { icon: "🏃", name: "Бег / эллипс", sets: "30 мин", weighted: false, done: false },
+      { icon: demoExerciseIcon(false), name: "Бег / эллипс", sets: "30 мин", weighted: false, done: false },
     ],
   },
   "Пт": {
     title: "ВЕРХ ТЕЛА 2", duration: "45 мин",
     exercises: [
-      { icon: "💪", name: "Жим штанги лёжа", sets: "4 × 8", weighted: true, weight: null, done: false },
-      { icon: "🏋", name: "Тяга верхнего блока", sets: "3 × 12", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Жим штанги лёжа", sets: "4 × 8", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Тяга верхнего блока", sets: "3 × 12", weighted: true, weight: null, done: false },
     ],
   },
   "Сб": {
     title: "НИЗ ТЕЛА 2", duration: "40 мин",
     exercises: [
-      { icon: "🦵", name: "Румынская тяга", sets: "3 × 10", weighted: true, weight: null, done: false },
+      { icon: demoExerciseIcon(true), name: "Румынская тяга", sets: "3 × 10", weighted: true, weight: null, done: false },
     ],
   },
   "Вс": { title: "ОТДЫХ", duration: "", exercises: [] },
@@ -259,7 +308,7 @@ function normalizeProgram(rawProgram) {
         weighted: !!e.weighted,
         weight: null,
         done: false,
-        icon: e.weighted ? "💪" : "⏱",
+        icon: icon(e.weighted ? "dumbbell" : "timer", { size: 22 }),
       })),
     };
   });
@@ -460,7 +509,7 @@ function renderAnketa() {
         <div class="anketa-section-head" data-toggle-section>
           <div class="anketa-section-num ${filled ? "done" : ""}">${filled ? "✓" : i + 1}</div>
           <div class="anketa-section-title">${section.title}</div>
-          ${section.warn ? '<span class="anketa-section-warn">⚠️</span>' : ""}
+          ${section.warn ? `<span class="anketa-section-warn">${icon("warn", { size: 16 })}</span>` : ""}
           <span class="anketa-section-chevron">⌄</span>
         </div>
         <div class="anketa-section-body" hidden>
@@ -589,7 +638,7 @@ function renderSessionExercise() {
 
   document.getElementById("session-progress-label").textContent = `Упражнение ${SESSION.index + 1} из ${total}`;
   document.getElementById("session-progress-fill").style.width = `${(SESSION.index / total) * 100}%`;
-  document.getElementById("session-exercise-icon").textContent = ex.weighted ? "💪" : "⏱";
+  document.getElementById("session-exercise-icon").innerHTML = icon(ex.weighted ? "dumbbell" : "timer");
   document.getElementById("session-exercise-name").textContent = ex.name;
   document.getElementById("session-exercise-target").textContent = ex.sets;
 
@@ -746,8 +795,8 @@ function renderExercises(exercises) {
     if (cardioDone) {
       list.innerHTML = `
         <div class="rest-day-card">
-          <div class="rest-day-title">🔥 КАРДИО${cachedCardio ? `: ${cachedCardio.name.toUpperCase()}` : ""}</div>
-          <div class="hint-text" style="margin: 12px 0 0;">${cachedCardio && cachedCardio.duration ? `${cachedCardio.duration} — ` : ""}уже записано. Отдыхай дальше 😴</div>
+          <div class="rest-day-title">${icon("flame")} КАРДИО${cachedCardio ? `: ${cachedCardio.name.toUpperCase()}` : ""}</div>
+          <div class="hint-text" style="margin: 12px 0 0;">${cachedCardio && cachedCardio.duration ? `${cachedCardio.duration} — ` : ""}уже записано. Отдыхай дальше.</div>
         </div>
       `;
       return;
@@ -755,8 +804,8 @@ function renderExercises(exercises) {
 
     list.innerHTML = `
       <div class="rest-day-card">
-        <div class="rest-day-title">ВЫХОДНОЙ 😴</div>
-        <div class="rest-day-sub">Может сделаешь кардио? 20 минут — это недолго, но сильно приблизит к твоей цели 🔥</div>
+        <div class="rest-day-title">${icon("moon")} ВЫХОДНОЙ</div>
+        <div class="rest-day-sub">Может сделаешь кардио? 20 минут — это недолго, но сильно приблизит к твоей цели.</div>
         <button class="btn-outline" id="add-cardio-btn">+ Добавить кардио</button>
         <div id="cardio-form" hidden>
           <div class="anketa-field"><label>Какое кардио?</label><input type="text" id="cardio-name" placeholder="Бег, велосипед, скакалка…" /></div>
@@ -814,7 +863,7 @@ function renderExercises(exercises) {
   const startBtn = document.getElementById("start-workout-btn");
   startBtn.textContent = doneToday ? "Пройти ещё раз" : "Начать";
 
-  list.innerHTML = (doneToday ? `<div class="hint-text" style="margin:0 0 12px;">✅ Тренировка на сегодня уже выполнена.</div>` : "") + exercises.map((ex, i) => {
+  list.innerHTML = (doneToday ? `<div class="hint-text" style="margin:0 0 12px;display:flex;align-items:center;gap:6px;"><span class="icon-inline">${icon("check", { size: 15 })}</span>Тренировка на сегодня уже выполнена.</div>` : "") + exercises.map((ex, i) => {
     const prev = lastWeightFor(ex.name);
     return `
     <div class="exercise-item">
@@ -873,15 +922,15 @@ function selectWorkoutDay(day) {
 
   if (cardio) {
     document.getElementById("workout-day-title").textContent = "КАРДИО";
-    document.getElementById("workout-day-meta").textContent = `🔥 ${cardio.name}${cardio.duration ? ` · ⏱ ${cardio.duration}` : ""}`;
+    document.getElementById("workout-day-meta").textContent = `${cardio.name}${cardio.duration ? ` · ${cardio.duration}` : ""}`;
   } else if (!info.exercises.length && WORKOUT_DATES.some(ts => dateKey(ts) === dateStr)) {
     document.getElementById("workout-day-title").textContent = "КАРДИО";
-    document.getElementById("workout-day-meta").textContent = "🔥 Уже выполнено";
+    document.getElementById("workout-day-meta").textContent = "Уже выполнено";
   } else {
     document.getElementById("workout-day-title").textContent = info.title;
     document.getElementById("workout-day-meta").textContent = info.exercises.length
-      ? `⏱ ${info.duration} · 🔥 ${info.exercises.length} упражнений`
-      : "😴 День отдыха";
+      ? `${info.duration} · ${info.exercises.length} упражнений`
+      : "День отдыха";
   }
 
   renderWorkoutDayPills();
@@ -923,7 +972,7 @@ function renderWeekProgram() {
           <span class="week-program-day-name${d === currentWorkoutDay ? " is-today" : ""}">${d}</span>
           <span class="week-program-day-title">${info.title}</span>
           ${!isRest ? `<span class="week-program-day-check${isDone ? " done" : ""}">${isDone ? "✓" : "○"}</span>` : ""}
-          ${cardioLogged ? `<span class="week-program-day-check done">🔥</span>` : ""}
+          ${cardioLogged ? `<span class="week-program-day-check done">${icon("flame", { size: 13 })}</span>` : ""}
         </div>
         ${isRest ? "" : `<div class="week-program-exercises">${info.exercises.map(e => `
           <div class="week-program-ex-row"><span>${e.name}</span><span>${e.sets}</span></div>
@@ -1016,13 +1065,13 @@ function renderAchievements() {
   const weightDelta = weights.length > 1 ? Math.round((weights[weights.length - 1] - weights[0]) * 10) / 10 : null;
 
   const cards = [
-    { value: `🔥 ${computeStreakDays()}`, label: "дней подряд" },
-    { value: `🏆 ${WORKOUT_DATES.length}`, label: "тренировок выполнено" },
+    { icon: "flame", value: `${computeStreakDays()}`, label: "дней подряд" },
+    { icon: "trophy", value: `${WORKOUT_DATES.length}`, label: "тренировок выполнено" },
   ];
-  if (weightDelta != null) cards.push({ value: `${weightDelta > 0 ? "+" : ""}${weightDelta} кг`, label: "с начала программы" });
-  cards.push({ value: `${computeWeeksWithoutMissedCheckin()}`, label: "нед. без пропущенного чек-ина" });
+  if (weightDelta != null) cards.push({ icon: "target", value: `${weightDelta > 0 ? "+" : ""}${weightDelta} кг`, label: "с начала программы" });
+  cards.push({ icon: "check", value: `${computeWeeksWithoutMissedCheckin()}`, label: "нед. без пропущенного чек-ина" });
 
-  wrap.innerHTML = cards.map(c => `<div class="achievement-card"><div class="achievement-value">${c.value}</div><div class="achievement-label">${c.label}</div></div>`).join("");
+  wrap.innerHTML = cards.map(c => `<div class="achievement-card"><span class="icon-badge sm">${icon(c.icon, { size: 15 })}</span><div class="achievement-value">${c.value}</div><div class="achievement-label">${c.label}</div></div>`).join("");
 }
 
 // ---------- Усиленный экран результата ----------
@@ -1744,19 +1793,26 @@ function renderWeekNutrition() {
   `;
 
   const kcalDelta = Math.round(avgKcal - NUTRITION_TARGET.kcal);
-  let verdict;
+  let verdict, verdictIcon, verdictWarn = false;
   if (Math.abs(kcalDelta) <= NUTRITION_TARGET.kcal * 0.05) {
-    verdict = `✅ В среднем за неделю норма калорий соблюдена (${Math.round(avgKcal)} из ${NUTRITION_TARGET.kcal} ккал). Если прогресс стоит — причина, скорее всего, не в питании.`;
+    verdict = `В среднем за неделю норма калорий соблюдена (${Math.round(avgKcal)} из ${NUTRITION_TARGET.kcal} ккал). Если прогресс стоит — причина, скорее всего, не в питании.`;
+    verdictIcon = "check";
   } else if (kcalDelta > 0) {
     const overDays = daysWithData
       .filter(d => d.sums.kcal > NUTRITION_TARGET.kcal * 1.1)
       .map(d => new Date(d.dateStr).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }));
     const overText = overDays.length ? ` в основном за счёт ${overDays.join(", ")}` : "";
-    verdict = `⚠️ В среднем за неделю перебор на ${kcalDelta} ккал/день${overText}. Это может объяснять застой в прогрессе, даже если в остальные дни всё по плану.`;
+    verdict = `В среднем за неделю перебор на ${kcalDelta} ккал/день${overText}. Это может объяснять застой в прогрессе, даже если в остальные дни всё по плану.`;
+    verdictIcon = "warn";
+    verdictWarn = true;
   } else {
-    verdict = `⚠️ В среднем за неделю недобор на ${Math.abs(kcalDelta)} ккал/день. При дефиците это не проблема, но при цели набора/поддержания — стоит обратить внимание.`;
+    verdict = `В среднем за неделю недобор на ${Math.abs(kcalDelta)} ккал/день. При дефиците это не проблема, но при цели набора/поддержания — стоит обратить внимание.`;
+    verdictIcon = "warn";
+    verdictWarn = true;
   }
-  document.getElementById("week-verdict").textContent = verdict;
+  const verdictEl = document.getElementById("week-verdict");
+  verdictEl.classList.toggle("warn", verdictWarn);
+  verdictEl.innerHTML = `${icon(verdictIcon, { size: 18 })}<span>${verdict}</span>`;
 }
 
 // ---------- Карточка цели на главном экране ----------
@@ -1801,13 +1857,13 @@ function renderAnketaNudge() {
   const filled = anketaFullyFilled();
   card.hidden = filled;
   if (filled) return;
-  document.getElementById("anketa-nudge-label").textContent = "📝 АНКЕТА";
+  document.getElementById("anketa-nudge-label").textContent = "АНКЕТА";
   document.getElementById("anketa-nudge-title").textContent = "Заполни анкету";
   document.getElementById("anketa-nudge-sub").textContent = "Тренер подберёт программу и КБЖУ под тебя — это займёт пару минут";
 }
 
 function hasActiveSubscription() {
-  return !!(SUBSCRIPTION_UNTIL && new Date(SUBSCRIPTION_UNTIL) >= new Date(new Date().toDateString()));
+  return !!(SUBSCRIPTION_UNTIL && SUBSCRIPTION_UNTIL.slice(0, 10) >= localDateKey(new Date()));
 }
 
 function renderTariffNudge() {
@@ -1846,7 +1902,7 @@ function renderTariffScreen() {
     ? `<div class="hint-text" style="margin-bottom:16px;">Подписка активна до ${new Date(SUBSCRIPTION_UNTIL).toLocaleDateString("ru-RU")}.</div>`
     : REQUESTED_TARIFF
     ? `<div class="hint-text" style="margin-bottom:16px;">Заявка на «${REQUESTED_TARIFF.name}» отправлена — тренер свяжется с тобой в переписке, чтобы принять оплату.</div>
-       <button class="btn-primary" id="tariff-contact-btn" style="margin-bottom:20px;">💬 Написать тренеру</button>`
+       <button class="btn-primary btn-with-icon" id="tariff-contact-btn" style="margin-bottom:20px;">${icon("chat")}Написать тренеру</button>`
     : `<div class="hint-text" style="margin-bottom:16px;">Выбери тариф — тренер увидит заявку и напишет тебе, чтобы принять оплату.</div>`;
 
   const cardsHtml = TARIFFS.map((t, i) => {
