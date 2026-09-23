@@ -170,12 +170,20 @@ function getInitData() {
     }
   } catch (e) {}
 
-  // Постоянная ссылка без Telegram: ?token=... в адресе. Не убираем его из URL — если
+  // Постоянная ссылка без Telegram: токен в адресе. Не убираем его из URL — если
   // добавить страницу на экран домой, iOS запомнит именно текущий адрес, и без токена
   // в самой ссылке значок на главном экране открывал бы пустой экран (изолированное
   // хранилище standalone-режима не всегда видит localStorage обычного Safari).
+  //
+  // Формат ссылки — #tok_xxx (hash), а не ?token=tok_xxx (query): начиная с iOS 17
+  // Safari может вырезать query-параметры при добавлении на экран домой (защита от
+  // трекинг-параметров в ссылках), а hash для этого не трогает — он вообще не уходит
+  // на сервер и Safari его не считает трекинг-меткой. Старые ссылки с ?token= всё ещё
+  // поддерживаются ниже, для уже выданных ссылок и созданных по ним ярлыков.
   try {
-    const urlToken = new URLSearchParams(window.location.search).get("token");
+    const hash = window.location.hash.replace(/^#/, "");
+    const hashToken = hash.startsWith("tok_") ? hash : null;
+    const urlToken = hashToken || new URLSearchParams(window.location.search).get("token");
     if (urlToken) {
       localStorage.setItem("access_token", urlToken);
       return urlToken;
