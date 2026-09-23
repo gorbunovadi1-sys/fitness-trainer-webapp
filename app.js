@@ -595,10 +595,10 @@ let currentWorkoutDay = RU_DAY_BY_JS_INDEX[new Date().getDay()];
 if (!PROGRAM[currentWorkoutDay]) currentWorkoutDay = "Пн";
 
 function saveWorkoutLog() {
-  const exercises = PROGRAM[currentWorkoutDay].exercises.filter(e => e.weighted);
-  if (!exercises.length) return;
-  postJSON("/api/workout-log", {
-    exercises: exercises.map(e => ({ name: e.name, weight: e.weight, done: !!e.done })),
+  const exercises = PROGRAM[currentWorkoutDay].exercises;
+  if (!exercises.length) return true;
+  return postJSON("/api/workout-log", {
+    exercises: exercises.map(e => ({ name: e.name, weight: e.weighted ? e.weight : null, done: !!e.done })),
   });
 }
 
@@ -803,8 +803,8 @@ function renderExercises(exercises) {
     if (cardioDone) {
       list.innerHTML = `
         <div class="rest-day-card">
-          <div class="rest-day-title">${icon("flame")} КАРДИО${cachedCardio ? `: ${cachedCardio.name.toUpperCase()}` : ""}</div>
-          <div class="hint-text" style="margin: 12px 0 0;">${cachedCardio && cachedCardio.duration ? `${cachedCardio.duration} — ` : ""}уже записано. Отдыхай дальше.</div>
+          <div class="rest-day-title">${icon("flame")} КАРДИО${cachedCardio ? `: ${escapeHtml(cachedCardio.name.toUpperCase())}` : ""}</div>
+          <div class="hint-text" style="margin: 12px 0 0;">${cachedCardio && cachedCardio.duration ? `${escapeHtml(cachedCardio.duration)} — ` : ""}уже записано. Отдыхай дальше.</div>
         </div>
       `;
       return;
@@ -877,8 +877,8 @@ function renderExercises(exercises) {
     <div class="exercise-item">
       <div class="exercise-thumb">${ex.icon}</div>
       <div class="exercise-info">
-        <div class="exercise-name">${ex.name}</div>
-        <div class="exercise-sets">${ex.sets}</div>
+        <div class="exercise-name">${escapeHtml(ex.name)}</div>
+        <div class="exercise-sets">${escapeHtml(ex.sets)}</div>
         ${ex.weighted ? `
           <div class="weight-field">
             <input type="number" inputmode="decimal" step="0.5" min="0"
@@ -894,10 +894,17 @@ function renderExercises(exercises) {
   }).join("");
 
   list.querySelectorAll("[data-check]").forEach(el => {
-    el.addEventListener("click", () => {
+    el.addEventListener("click", async () => {
       el.classList.toggle("done");
-      exercises[Number(el.dataset.check)].done = el.classList.contains("done");
-      saveWorkoutLog();
+      const ex = exercises[Number(el.dataset.check)];
+      const prevDone = ex.done;
+      ex.done = el.classList.contains("done");
+      const ok = await saveWorkoutLog();
+      if (!ok) {
+        ex.done = prevDone;
+        el.classList.toggle("done");
+        alert("Не удалось сохранить — попробуй ещё раз.");
+      }
     });
   });
 
@@ -978,12 +985,12 @@ function renderWeekProgram() {
       <div class="week-program-day">
         <div class="week-program-day-head">
           <span class="week-program-day-name${d === currentWorkoutDay ? " is-today" : ""}">${d}</span>
-          <span class="week-program-day-title">${info.title}</span>
+          <span class="week-program-day-title">${escapeHtml(info.title)}</span>
           ${!isRest ? `<span class="week-program-day-check${isDone ? " done" : ""}">${isDone ? "✓" : "○"}</span>` : ""}
           ${cardioLogged ? `<span class="week-program-day-check done">${icon("flame", { size: 13 })}</span>` : ""}
         </div>
         ${isRest ? "" : `<div class="week-program-exercises">${info.exercises.map(e => `
-          <div class="week-program-ex-row"><span>${e.name}</span><span>${e.sets}</span></div>
+          <div class="week-program-ex-row"><span>${escapeHtml(e.name)}</span><span>${escapeHtml(e.sets)}</span></div>
         `).join("")}</div>`}
       </div>`;
   }).join("");
@@ -1475,8 +1482,10 @@ function dateInputToIso(dateStr) {
   return `${dateStr}T12:00:00.000Z`;
 }
 function insertSortedByTs(array, entry) {
+  // Сравниваем как моменты времени, не строки — "...+00:00" и "...000Z" один и тот же момент, но лексикографически не равны.
+  const entryTime = new Date(entry.ts).getTime();
   let i = array.length;
-  while (i > 0 && array[i - 1].ts > entry.ts) i--;
+  while (i > 0 && new Date(array[i - 1].ts).getTime() > entryTime) i--;
   array.splice(i, 0, entry);
 }
 ["m-date", "photo-date"].forEach(id => {
@@ -1661,7 +1670,7 @@ async function deleteNutritionLog(id) {
 }
 
 function nutritionEntryRowHtml(n) {
-  const link = n.source === "fatsecret" && n.url ? ` · <a href="${n.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
+  const link = n.source === "fatsecret" && n.url ? ` · <a href="${escapeHtml(n.url)}" target="_blank" rel="noopener">FatSecret</a>` : "";
   const delBtn = n.id != null ? `<button class="nutrition-entry-del" data-del-nutrition="${n.id}" title="Удалить">✕</button>` : "";
   return `<div class="nutrition-entry-row"><span>${n.kcal || 0} ккал · Б${n.protein || 0} Ж${n.fat || 0} У${n.carbs || 0}${link}</span>${delBtn}</div>`;
 }
@@ -1757,7 +1766,7 @@ function renderWeekNutrition() {
     const pct = Math.min(100, (d.sums.kcal / maxKcal) * 100);
     const over = d.sums.kcal > NUTRITION_TARGET.kcal * 1.1;
     const fatsecretLog = d.logs.find(n => n.source === "fatsecret" && n.url);
-    const link = fatsecretLog ? ` · <a href="${fatsecretLog.url}" target="_blank" rel="noopener">FatSecret</a>` : "";
+    const link = fatsecretLog ? ` · <a href="${escapeHtml(fatsecretLog.url)}" target="_blank" rel="noopener">FatSecret</a>` : "";
     return `
       <div class="week-day-card">
         <div class="week-day-row" data-toggle-day-entries="${d.dateStr}">
@@ -1913,7 +1922,7 @@ function renderTariffScreen() {
   const statusHtml = hasActiveSubscription()
     ? `<div class="hint-text" style="margin-bottom:16px;">Подписка активна до ${new Date(SUBSCRIPTION_UNTIL).toLocaleDateString("ru-RU")}.</div>`
     : REQUESTED_TARIFF
-    ? `<div class="hint-text" style="margin-bottom:16px;">Заявка на «${REQUESTED_TARIFF.name}» отправлена — тренер свяжется с тобой в переписке, чтобы принять оплату.</div>
+    ? `<div class="hint-text" style="margin-bottom:16px;">Заявка на «${escapeHtml(REQUESTED_TARIFF.name)}» отправлена — тренер свяжется с тобой в переписке, чтобы принять оплату.</div>
        <button class="btn-primary btn-with-icon" id="tariff-contact-btn" style="margin-bottom:20px;">${icon("chat")}Написать тренеру</button>`
     : `<div class="hint-text" style="margin-bottom:16px;">Выбери тариф — тренер увидит заявку и напишет тебе, чтобы принять оплату.</div>`;
 
@@ -1922,8 +1931,8 @@ function renderTariffScreen() {
     return `
     <div class="list-card tariff-card">
       <div class="list-card-body">
-        <div class="list-card-title">${t.name}${t.price ? ` — ${t.price}` : ""}</div>
-        ${t.description ? `<div class="list-card-sub">${t.description}</div>` : ""}
+        <div class="list-card-title">${escapeHtml(t.name)}${t.price ? ` — ${escapeHtml(t.price)}` : ""}</div>
+        ${t.description ? `<div class="list-card-sub">${escapeHtml(t.description)}</div>` : ""}
       </div>
       <button class="btn-outline-sm" data-pick-tariff="${i}" ${picked ? "disabled" : ""}>
         ${picked ? "Выбрано ✓" : "Выбрать"}
