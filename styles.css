@@ -428,18 +428,11 @@ html, body {
   letter-spacing: 0.5px;
   margin: 4px 0 10px;
 }
-.section-label-row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
-.section-label-row .section-label { margin: 0; }
-.help-btn {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim);
-  font-size: 13px; font-weight: 800; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-
 /* ---------- Гиды (замеры / фото) ---------- */
 .guide-card-list { display: flex; flex-direction: column; gap: 14px; padding-bottom: 8px; }
 .guide-card-img { width: 100%; display: block; border-radius: 16px; border: 1px solid var(--border); }
+.photo-guide-triptych { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+.photo-guide-triptych img { width: 100%; display: block; border-radius: 12px; border: 1px solid var(--border); }
 .photo-guide-checklist { display: flex; flex-direction: column; gap: 10px; }
 .photo-guide-checklist div { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .photo-guide-checklist .icon { color: var(--accent); flex-shrink: 0; }

@@ -1127,7 +1127,7 @@ function renderResultHero() {
 }
 
 // ---------- Карточка результата для Stories ----------
-const MEASURE_SHARE_LABELS = { waist: "см в талии", zhivot: "см в животе", bedra: "см в бёдрах", bedro: "см в бедре" };
+const MEASURE_SHARE_LABELS = { waist: "см в талии", zhivot: "см в животе", bedra: "см в ягодицах", bedro: "см в ногах" };
 
 async function drawShareCard() {
   const data = computeResultData();
@@ -1269,8 +1269,8 @@ function renderWeightTab() {
 
 const MEASUREMENT_FIELDS = [
   ["weight", "Вес", "кг"], ["waist", "Талия", "см"], ["zhivot", "Живот", "см"],
-  ["bedra", "Бёдра", "см"], ["bedro", "Бедро", "см"], ["ikry", "Икры", "см"],
-  ["ruki", "Руки", "см"], ["plechi", "Плечи", "см"], ["spina_grud", "Спина (грудь)", "см"],
+  ["bedra", "Ягодицы", "см"], ["bedro", "Ноги", "см"], ["ikry", "Икры", "см"],
+  ["ruki", "Руки", "см"], ["plechi", "Плечи", "см"], ["spina_grud", "Спина (ширина)", "см"],
 ];
 let editingMeasurementId = null;
 

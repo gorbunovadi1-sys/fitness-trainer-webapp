@@ -322,10 +322,15 @@
     </div>
 
     <div data-view-content="measurements" id="progress-measurements" hidden>
-      <div class="section-label-row">
-        <div class="section-label">Новая запись</div>
-        <button class="help-btn" id="measure-guide-btn" title="Как правильно измерять">?</button>
+      <div class="list-card" id="measure-guide-btn">
+        <div class="list-card-icon" data-icon="notebook"></div>
+        <div class="list-card-body">
+          <div class="list-card-title">Как правильно измерять</div>
+          <div class="list-card-sub">8 точек с фото-подсказками — открыть гид</div>
+        </div>
+        <div class="list-card-arrow">→</div>
       </div>
+      <div class="section-label" style="margin-top: 20px;">Новая запись</div>
       <div class="hint-text tip-text">Взвешивайся и делай замеры по утрам натощак, до еды и воды — так цифры будет честно сравнивать раз от раза.</div>
       <div class="measurement-form" style="margin-bottom: 4px;">
         <label>Дата<input type="date" id="m-date" /></label>
@@ -334,12 +339,12 @@
         <label>Вес, кг<input type="number" step="0.1" id="m-weight" /></label>
         <label>Талия, см<input type="number" step="0.5" id="m-waist" /></label>
         <label>Живот, см<input type="number" step="0.5" id="m-zhivot" /></label>
-        <label>Бёдра, см<input type="number" step="0.5" id="m-bedra" /></label>
-        <label>Бедро, см<input type="number" step="0.5" id="m-bedro" /></label>
+        <label>Ягодицы, см<input type="number" step="0.5" id="m-bedra" /></label>
+        <label>Ноги (бедро), см<input type="number" step="0.5" id="m-bedro" /></label>
         <label>Икры, см<input type="number" step="0.5" id="m-ikry" /></label>
         <label>Руки, см<input type="number" step="0.5" id="m-ruki" /></label>
         <label>Плечи, см<input type="number" step="0.5" id="m-plechi" /></label>
-        <label>Спина (грудь), см<input type="number" step="0.5" id="m-spina_grud" /></label>
+        <label>Спина (ширина), см<input type="number" step="0.5" id="m-spina_grud" /></label>
       </div>
       <button class="btn-primary" id="submit-measurement">Сохранить замер</button>
       <button class="btn-outline" id="cancel-edit-measurement" hidden>Отмена</button>
@@ -350,10 +355,15 @@
     </div>
 
     <div data-view-content="photos" id="progress-photos" hidden>
-      <div class="section-label-row">
-        <div class="section-label">Добавить фото</div>
-        <button class="help-btn" id="photo-guide-btn" title="Как правильно делать фото">?</button>
+      <div class="list-card" id="photo-guide-btn">
+        <div class="list-card-icon" data-icon="notebook"></div>
+        <div class="list-card-body">
+          <div class="list-card-title">Как правильно делать фото</div>
+          <div class="list-card-sub">Пример + чек-лист — открыть гид</div>
+        </div>
+        <div class="list-card-arrow">→</div>
       </div>
+      <div class="section-label" style="margin-top: 20px;">Добавить фото</div>
       <div class="measurement-form" style="margin-bottom: 4px;">
         <label>Дата<input type="date" id="photo-date" /></label>
       </div>
@@ -392,14 +402,14 @@
       <div class="topbar-spacer"></div>
     </div>
     <div class="guide-card-list">
-      <img class="guide-card-img" src="assets/measure-guide/01_taliya.png" alt="Талия — ниже рёбер" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/02_zhivot.png" alt="Живот — низ пупка" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/03_bedra.png" alt="Бёдра — самая широкая часть" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/04_bedro.png" alt="Бедро — самая широкая часть" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/05_ikry.png" alt="Икры" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/06_ruki.png" alt="Руки — расслабленная" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/07_plechi.png" alt="Плечи — полный обхват" loading="lazy" />
-      <img class="guide-card-img" src="assets/measure-guide/08_spina_grud.png" alt="Спина (грудь)" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/01_ikry.jpg" alt="Икры — полный обхват" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/02_nogi.jpg" alt="Ноги — полный обхват, бедро" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/03_yagoditsy.jpg" alt="Ягодицы — полный обхват" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/04_zhivot.jpg" alt="Живот — низ пупка" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/05_taliya.jpg" alt="Талия — ниже рёбер" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/06_spina.jpg" alt="Спина — ширина" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/07_ruki.jpg" alt="Руки — полный обхват" loading="lazy" />
+      <img class="guide-card-img" src="assets/measure-guide/08_plechi.jpg" alt="Плечи — полный обхват" loading="lazy" />
       <img class="guide-card-img" src="assets/measure-guide/09_sovety.png" alt="Советы" loading="lazy" />
     </div>
   </section>
@@ -416,7 +426,11 @@
       <span data-icon="warn"></span>
       <span>Делай фото в одном и том же месте, при одинаковом освещении и в одном и том же белье.</span>
     </div>
-    <img class="guide-card-img" src="assets/photo-guide-ref.png" alt="Пример фото: спереди, сбоку, сзади" style="margin-bottom: 20px;" />
+    <div class="photo-guide-triptych">
+      <img src="assets/photo-guide-front.jpg" alt="Пример фото спереди" loading="lazy" />
+      <img src="assets/photo-guide-side.jpg" alt="Пример фото сбоку" loading="lazy" />
+      <img src="assets/photo-guide-back.jpg" alt="Пример фото сзади" loading="lazy" />
+    </div>
     <div class="section-label">Важные моменты</div>
     <div class="photo-guide-checklist">
       <div><span data-icon="check"></span>Один и тот же комплект белья</div>
