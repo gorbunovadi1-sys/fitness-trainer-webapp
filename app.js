@@ -28,16 +28,16 @@ const ICON_PATHS = {
 
 function icon(name, opts = {}) {
   const { size = 20, cls = "" } = opts;
-  return `<svg class="icon ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
+  return `<svg class="icon ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
 }
 
-function iconBadge(name, size = 19) {
+function iconBadge(name, size = 21) {
   return `<span class="icon-badge">${icon(name, { size })}</span>`;
 }
 
 function populateStaticIcons(root = document) {
   root.querySelectorAll("[data-icon]").forEach(el => {
-    const size = el.classList.contains("icon-badge") || el.classList.contains("modal-icon") || el.classList.contains("subscription-gate-icon") ? 19 : 20;
+    const size = el.classList.contains("icon-badge") || el.classList.contains("modal-icon") || el.classList.contains("subscription-gate-icon") ? 21 : 20;
     el.innerHTML = icon(el.dataset.icon, { size });
   });
 }

@@ -105,7 +105,7 @@ html, body {
 #screen-workouts .hero-img { object-position: 50% 20%; }
 #screen-progress .hero-img { object-position: center; }
 #screen-checkin .hero-img { object-position: center 30%; }
-#screen-nutrition .hero-img { object-position: center 25%; }
+#screen-nutrition .hero-img { object-position: center 70%; }
 
 .hero-text {
   position: relative;
@@ -1181,7 +1181,7 @@ html, body {
 /* ---------- Иконки вместо эмодзи ---------- */
 .icon { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .icon-badge {
-  width: 34px; height: 34px; border-radius: 10px;
+  width: 38px; height: 38px; border-radius: 11px;
   background: rgba(201,255,61,0.12); color: var(--accent);
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
