@@ -161,7 +161,7 @@ document.getElementById("daily-quote").textContent =
   "«" + MOTIVATIONAL_QUOTES[dayOfYear(new Date()) % MOTIVATIONAL_QUOTES.length] + "»";
 
 // ---------- Backend API ----------
-const API_BASE = "https://fitness-trainer-bot-production-b12c.up.railway.app";
+const API_BASE = "https://fit.201-50-117-140.sslip.io";
 
 function getInitData() {
   try {
